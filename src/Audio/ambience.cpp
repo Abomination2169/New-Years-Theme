@@ -7,6 +7,8 @@
 #include "custom-types/shared/delegate.hpp"
 
 #include <filesystem>
+#include <algorithm>
+#include <cctype>
 #include <random>
 #include <vector>
 #include <string>
