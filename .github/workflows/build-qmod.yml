@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -82,3 +82,12 @@ jobs:
           name: New-Years-Theme-QMOD
           path: New-Years-Theme.qmod
           if-no-files-found: error
+
+      - name: Replace v1.0.0 release QMOD with validated package
+        if: github.event_name == 'push' && github.event.head_commit.message == 'Publish corrected New Years QMOD metadata to v1.0.0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view v1.0.0 --repo "${GITHUB_REPOSITORY}"
+          gh release upload v1.0.0 New-Years-Theme.qmod --clobber --repo "${GITHUB_REPOSITORY}"
+          gh release view v1.0.0 --repo "${GITHUB_REPOSITORY}" --json assets --jq '.assets[] | select(.name == "New-Years-Theme.qmod") | {name,size,url}'
