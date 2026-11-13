@@ -39,52 +39,90 @@ namespace NewYears::decor {
         return go;
     }
 
+    // Small, layered geometry: no imported mesh dependencies and no update-loop cost.
     static void Bottle(Transform* parent, Vector3 at, float scale) {
-        auto bottle = GameObject::New_ctor("ChampagneBottle");
+        auto bottle = GameObject::New_ctor("DetailedChampagneBottle");
         bottle->transform->SetParent(parent, false);
         bottle->transform->localPosition = at;
         bottle->transform->localScale = Vector3(scale, scale, scale);
-        const Color green(0.045f, 0.26f, 0.18f, 1);
-        const Color gold(0.95f, 0.72f, 0.24f, 1);
-        Part(bottle->transform, "BottleBody", PrimitiveType::Cylinder,
-             Vector3(0, 0.16f, 0), Vector3(0.17f, 0.32f, 0.17f), green);
-        Part(bottle->transform, "BottleShoulder", PrimitiveType::Sphere,
-             Vector3(0, 0.32f, 0), Vector3(0.16f, 0.13f, 0.16f), green);
-        Part(bottle->transform, "BottleNeck", PrimitiveType::Cylinder,
-             Vector3(0, 0.43f, 0), Vector3(0.068f, 0.19f, 0.068f), green);
-        Part(bottle->transform, "GoldFoil", PrimitiveType::Cylinder,
-             Vector3(0, 0.51f, 0), Vector3(0.077f, 0.095f, 0.077f), gold);
-        Part(bottle->transform, "ChampagneLabel", PrimitiveType::Cylinder,
-             Vector3(0, 0.20f, 0), Vector3(0.175f, 0.085f, 0.175f), gold);
+        const Color green(0.025f, 0.19f, 0.12f, 1);
+        const Color greenHighlight(0.09f, 0.38f, 0.26f, 1);
+        const Color gold(0.96f, 0.72f, 0.20f, 1);
+        const Color cream(0.93f, 0.86f, 0.67f, 1);
+        Part(bottle->transform, "ThickGlassBase", PrimitiveType::Cylinder,
+             Vector3(0, 0.035f, 0), Vector3(0.195f, 0.065f, 0.195f), green);
+        Part(bottle->transform, "DarkGlassBody", PrimitiveType::Cylinder,
+             Vector3(0, 0.21f, 0), Vector3(0.18f, 0.35f, 0.18f), green);
+        Part(bottle->transform, "CurvedShoulders", PrimitiveType::Sphere,
+             Vector3(0, 0.385f, 0), Vector3(0.175f, 0.14f, 0.175f), green);
+        Part(bottle->transform, "NarrowGlassNeck", PrimitiveType::Cylinder,
+             Vector3(0, 0.49f, 0), Vector3(0.075f, 0.20f, 0.075f), green);
+        Part(bottle->transform, "FoilNeck", PrimitiveType::Cylinder,
+             Vector3(0, 0.535f, 0), Vector3(0.081f, 0.13f, 0.081f), gold);
+        Part(bottle->transform, "FoilLip", PrimitiveType::Cylinder,
+             Vector3(0, 0.603f, 0), Vector3(0.087f, 0.018f, 0.087f), cream);
+        Part(bottle->transform, "FrontCreamLabel", PrimitiveType::Cube,
+             Vector3(0, 0.235f, -0.177f), Vector3(0.23f, 0.155f, 0.012f), cream);
+        Part(bottle->transform, "LabelGoldStripe", PrimitiveType::Cube,
+             Vector3(0, 0.282f, -0.186f), Vector3(0.21f, 0.021f, 0.014f), gold);
+        Part(bottle->transform, "LabelDarkStripe", PrimitiveType::Cube,
+             Vector3(0, 0.21f, -0.187f), Vector3(0.16f, 0.027f, 0.014f), green);
+        Part(bottle->transform, "GlassReflection", PrimitiveType::Cube,
+             Vector3(-0.10f, 0.21f, -0.146f), Vector3(0.019f, 0.21f, 0.012f), greenHighlight);
     }
 
     static void TippedGlass(Transform* parent, Vector3 at, float angle) {
-        auto glass = GameObject::New_ctor("KnockedOverChampagneGlass");
+        auto glass = GameObject::New_ctor("KnockedOverWineGlass");
         glass->transform->SetParent(parent, false);
         glass->transform->localPosition = at;
         glass->transform->localRotation = Quaternion::Euler(Vector3(0, 0, angle));
-        const Color silver(0.72f, 0.84f, 0.91f, 0.78f);
-        Part(glass->transform, "FluteBowl", PrimitiveType::Cylinder,
-             Vector3(0, 0.16f, 0), Vector3(0.10f, 0.25f, 0.10f), silver);
-        Part(glass->transform, "FluteStem", PrimitiveType::Cylinder,
-             Vector3(0, -0.045f, 0), Vector3(0.023f, 0.19f, 0.023f), silver);
-        Part(glass->transform, "FluteFoot", PrimitiveType::Cylinder,
-             Vector3(0, -0.15f, 0), Vector3(0.12f, 0.022f, 0.12f), silver);
+        const Color clear(0.72f, 0.87f, 0.94f, 0.46f);
+        const Color rim(0.89f, 0.95f, 1.0f, 0.78f);
+        // Wide, rounded goblet bowl rather than the old cylindrical flute.
+        Part(glass->transform, "RoundedWineBowl", PrimitiveType::Sphere,
+             Vector3(0, 0.18f, 0), Vector3(0.29f, 0.29f, 0.29f), clear);
+        Part(glass->transform, "WideOpenRim", PrimitiveType::Cylinder,
+             Vector3(0, 0.326f, 0), Vector3(0.235f, 0.012f, 0.235f), rim);
+        Part(glass->transform, "BowlLowerTaper", PrimitiveType::Sphere,
+             Vector3(0, 0.048f, 0), Vector3(0.17f, 0.13f, 0.17f), clear);
+        Part(glass->transform, "FineStem", PrimitiveType::Cylinder,
+             Vector3(0, -0.105f, 0), Vector3(0.024f, 0.24f, 0.024f), rim);
+        Part(glass->transform, "StemJoint", PrimitiveType::Sphere,
+             Vector3(0, -0.22f, 0), Vector3(0.060f, 0.035f, 0.060f), rim);
+        Part(glass->transform, "WideCircularFoot", PrimitiveType::Cylinder,
+             Vector3(0, -0.245f, 0), Vector3(0.22f, 0.018f, 0.22f), clear);
+        Part(glass->transform, "FootHighlight", PrimitiveType::Cylinder,
+             Vector3(0, -0.231f, 0), Vector3(0.19f, 0.008f, 0.19f), rim);
     }
 
     static void PartyHat(Transform* parent, Vector3 at, Color color, float tilt) {
-        auto hat = GameObject::New_ctor("NewYearsPartyHat");
+        auto hat = GameObject::New_ctor("DetailedNewYearsPartyHat");
         hat->transform->SetParent(parent, false);
         hat->transform->localPosition = at;
         hat->transform->localRotation = Quaternion::Euler(Vector3(0, 0, tilt));
-        Part(hat->transform, "HatCone", PrimitiveType::Cylinder,
-             Vector3(0, 0.19f, 0), Vector3(0.18f, 0.36f, 0.18f), color);
-        Part(hat->transform, "HatBrim", PrimitiveType::Cylinder,
-             Vector3(0, 0.015f, 0), Vector3(0.23f, 0.025f, 0.23f),
-             Color(0.95f, 0.74f, 0.26f, 1));
-        Part(hat->transform, "HatPom", PrimitiveType::Sphere,
-             Vector3(0, 0.39f, 0), Vector3(0.095f, 0.095f, 0.095f),
-             Color(1, 0.85f, 0.35f, 1));
+        const Color gold(1.0f, 0.77f, 0.26f, 1);
+        const Color light(0.97f, 0.91f, 0.72f, 1);
+        // Three progressively narrower sections form a tapered party hat.
+        Part(hat->transform, "WideConeBase", PrimitiveType::Cylinder,
+             Vector3(0, 0.08f, 0), Vector3(0.29f, 0.15f, 0.29f), color);
+        Part(hat->transform, "ConeMiddle", PrimitiveType::Cylinder,
+             Vector3(0, 0.205f, 0), Vector3(0.20f, 0.14f, 0.20f), color);
+        Part(hat->transform, "ConeTip", PrimitiveType::Sphere,
+             Vector3(0, 0.31f, 0), Vector3(0.105f, 0.14f, 0.105f), color);
+        Part(hat->transform, "MetallicBrim", PrimitiveType::Cylinder,
+             Vector3(0, 0.012f, 0), Vector3(0.34f, 0.028f, 0.34f), gold);
+        Part(hat->transform, "LowerGoldBand", PrimitiveType::Cylinder,
+             Vector3(0, 0.075f, 0), Vector3(0.297f, 0.026f, 0.297f), light);
+        Part(hat->transform, "UpperGoldBand", PrimitiveType::Cylinder,
+             Vector3(0, 0.20f, 0), Vector3(0.213f, 0.018f, 0.213f), gold);
+        Part(hat->transform, "MetallicPomPom", PrimitiveType::Sphere,
+             Vector3(0, 0.405f, 0), Vector3(0.125f, 0.125f, 0.125f), gold);
+        for (int i = 0; i < 6; ++i) {
+            const float x = -0.105f + i * 0.042f;
+            Part(hat->transform, "GlitterAccent", PrimitiveType::Sphere,
+                 Vector3(x, 0.145f + (i % 2) * 0.055f, -0.135f),
+                 Vector3(0.027f, 0.027f, 0.027f), light);
+        }
     }
 
     void Create() {
