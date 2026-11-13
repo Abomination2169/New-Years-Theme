@@ -2,7 +2,9 @@
 
 Watch New Years Theme in action!
 
-![New Year's Theme — Beat Saber](NewYears-README.png)
+[![New Year's Theme — Beat Saber](NewYears-README.png)](https://www.youtube.com/watch?v=I4uneD_i5p0)
+
+▶️ **Watch on YouTube:** https://www.youtube.com/watch?v=I4uneD_i5p0
 
 Happy New Years!
 
