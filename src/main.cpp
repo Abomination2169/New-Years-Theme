@@ -28,15 +28,9 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicOnEnable, &SongPreviewPlayer::OnEnable,
     NewYearsMenuMusicOnEnable(self);
 }
 
-MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
-                static_cast<void(SongPreviewPlayer::*)(AudioClip*, float, float, float, bool, System::Action*)>(&SongPreviewPlayer::CrossfadeTo),
-                void, SongPreviewPlayer* self, AudioClip* clip, float volume, float startTime,
-                float duration, bool isDefault, System::Action* callback) {
-    if (getModConfig().EnableCelebrationAmbience.GetValue() &&
-        self->_defaultAudioClip && self->_defaultAudioClip.ptr() != clip)
-        PlayNewYearsCustomSong(self);
-    NewYearsMenuMusicCrossfade(self, clip, volume, startTime, duration, isDefault, callback);
-}
+// Do not intercept CrossfadeTo: Beat Saber uses it for song previews and
+// menu transitions. Custom music is selected once when the preview player
+// enables, leaving preview and gameplay audio under native control.
 
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
                 void, LightWithIdManager* self, int lightId, Color color) {
@@ -77,7 +71,6 @@ MOD_EXTERN_FUNC void setup(CModInfo* info) noexcept {
 MOD_EXTERN_FUNC void late_load() noexcept {
     il2cpp_functions::Init();
     INSTALL_HOOK(PaperLogger, NewYearsMenuMusicOnEnable);
-    INSTALL_HOOK(PaperLogger, NewYearsMenuMusicCrossfade);
     INSTALL_HOOK(PaperLogger, NewYearsEnvironmentColors);
     INSTALL_HOOK(PaperLogger, NewYearsMenuActivate);
     INFO("New Year's Theme hooks installed");
