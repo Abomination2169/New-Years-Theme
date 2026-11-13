@@ -16,7 +16,8 @@ assert (root / "src/Confetti/confetti.cpp").is_file()
 main_source = (root / "src/main.cpp").read_text()
 assert "INSTALL_HOOK(PaperLogger, NewYearsMenuMusicOnEnable)" in main_source
 assert "INSTALL_HOOK(PaperLogger, NewYearsMenuMusicCrossfade)" in main_source
-assert "PlayNewYearsCustomSong(self)" in main_source
+assert "NewYearsRememberMenuPlayer(self)" in main_source
+assert "NewYearsMainMenuActivated()" in main_source
 assert "PlayNewYearsMenuSong" not in main_source
 assert "NewYearsDefaultMenuMusic" not in main_source
 assert manifest["fileCopies"] == []
