@@ -15,11 +15,11 @@ assert (root / "assets/confetti_streamers.png").is_file()
 assert (root / "src/Confetti/confetti.cpp").is_file()
 main_source = (root / "src/main.cpp").read_text()
 assert "NewYearsMenuMusicOnEnable" in main_source
-assert "NewYearsMenuMusicCrossfade" in main_source
+assert "INSTALL_HOOK(PaperLogger, NewYearsMenuMusicCrossfade)" not in main_source
 assert "PlayNewYearsCustomSong" in main_source
 assert "PlayNewYearsMenuSong" not in main_source
 assert "NewYearsDefaultMenuMusic" not in main_source
 assert manifest["fileCopies"] == []
 for e in manifest["fileCopies"]:
     assert (root / "FileCopies" / e["name"]).is_file(), e
-print("PASS: New Year's 1.40.8 metadata and assets; custom-song menu rotation with stock fallback")
+print("PASS: New Year's 1.40.8 metadata and assets; custom-song menu replacement without preview crossfade interception")
