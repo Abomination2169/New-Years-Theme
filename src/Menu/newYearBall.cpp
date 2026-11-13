@@ -37,7 +37,7 @@ namespace NewYears::ball {
         // not at a fixed camera coordinate. Tune after first Quest screenshot.
         root = GameObject::New_ctor("NewYearsMidnightBall");
         const Vector3 logoPosition = logo->transform->position;
-        root->transform->position = Vector3(logoPosition.x - 0.15f, logoPosition.y - 4.15f, logoPosition.z + 0.15f);
+        root->transform->position = Vector3(logoPosition.x - 0.30f, logoPosition.y - 4.15f, logoPosition.z + 0.15f);
         root->transform->rotation = Quaternion::get_identity();
         // Lower the assembly so the yellow top cap aligns near the bottom of the B in SABER.
         // Scale the whole assembly together, including facets and top cap.
