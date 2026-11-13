@@ -36,7 +36,8 @@ namespace NewYears::ball {
         // Position in the same world-space neighborhood as the real logo,
         // not at a fixed camera coordinate. Tune after first Quest screenshot.
         root = GameObject::New_ctor("NewYearsMidnightBall");
-        root->transform->position = logo->transform->position + Vector3(0.0f, -1.35f, 0.15f);
+        const Vector3 logoPosition = logo->transform->position;
+        root->transform->position = Vector3(logoPosition.x, logoPosition.y - 1.35f, logoPosition.z + 0.15f);
         root->transform->rotation = Quaternion::get_identity();
 
         auto shell = GameObject::CreatePrimitive(PrimitiveType::Sphere);
