@@ -2,11 +2,6 @@
 #include "UnityEngine/Transform.hpp"
 #include "UnityEngine/PrimitiveType.hpp"
 #include "UnityEngine/MeshRenderer.hpp"
-#include "UnityEngine/MeshFilter.hpp"
-#include "UnityEngine/Mesh.hpp"
-#include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
-#include <vector>
-#include <cmath>
 #include "UnityEngine/Material.hpp"
 #include "UnityEngine/Shader.hpp"
 #include "UnityEngine/Color.hpp"
@@ -44,119 +39,124 @@ namespace NewYears::decor {
         return go;
     }
 
-
-    // Lathed, smooth-profile geometry replaces the old stacked primitive shapes.
-    // Two-sided open goblet profile provides a real hollow bowl and visible rim.
-    struct ProfilePoint { float y, radius; };
-    static GameObject* Lathe(Transform* parent, const char* name,
-                            const std::vector<ProfilePoint>& profile,
-                            Color color, bool transparent = false) {
-        constexpr int segments = 32;
-        const int rings = static_cast<int>(profile.size());
-        if (rings < 2) return nullptr;
-        std::vector<Vector3> verts;
-        std::vector<int> indices;
-        verts.reserve(rings * (segments + 1));
-        for (const auto& p : profile) {
-            for (int j = 0; j <= segments; ++j) {
-                const float a = 6.283185307f * j / segments;
-                verts.emplace_back(p.radius * std::cos(a), p.y, p.radius * std::sin(a));
-            }
-        }
-        for (int i = 0; i + 1 < rings; ++i) {
-            for (int j = 0; j < segments; ++j) {
-                int a = i * (segments + 1) + j;
-                int b = a + segments + 1;
-                indices.insert(indices.end(), {a, b, a + 1, a + 1, b, b + 1, a + 1, b, a, b + 1, b, a + 1});
-            }
-        }
-        auto mesh = Mesh::New_ctor();
-        mesh->set_vertices(il2cpp_utils::vectorToArray(verts));
-        mesh->set_triangles(il2cpp_utils::vectorToArray(indices));
-        mesh->RecalculateNormals();
-        mesh->RecalculateBounds();
-        auto go = GameObject::New_ctor(name);
-        go->transform->SetParent(parent, false);
-        auto filter = go->AddComponent<MeshFilter*>();
-        filter->set_sharedMesh(mesh);
-        auto renderer = go->AddComponent<MeshRenderer*>();
-        auto shader = Shader::Find("Sprites/Default");
-        if (!shader) shader = Shader::Find("Sprites/Default");
-        if (shader) {
-            auto material = Material::New_ctor(shader);
-            material->set_color(color);
-            renderer->set_sharedMaterial(material);
-        }
-        return go;
+    // Small, layered geometry: no imported mesh dependencies and no update-loop cost.
+    static void Bottle(Transform* parent, Vector3 at, float scale) {
+        auto bottle = GameObject::New_ctor("DetailedChampagneBottle");
+        bottle->transform->SetParent(parent, false);
+        bottle->transform->localPosition = at;
+        bottle->transform->localScale = Vector3(scale, scale, scale);
+        const Color green(0.025f, 0.19f, 0.12f, 1);
+        const Color greenHighlight(0.09f, 0.38f, 0.26f, 1);
+        const Color gold(0.96f, 0.72f, 0.20f, 1);
+        const Color cream(0.93f, 0.86f, 0.67f, 1);
+        Part(bottle->transform, "ThickGlassBase", PrimitiveType::Cylinder,
+             Vector3(0, 0.035f, 0), Vector3(0.195f, 0.065f, 0.195f), green);
+        Part(bottle->transform, "DarkGlassBody", PrimitiveType::Cylinder,
+             Vector3(0, 0.21f, 0), Vector3(0.18f, 0.35f, 0.18f), green);
+        Part(bottle->transform, "CurvedShoulders", PrimitiveType::Sphere,
+             Vector3(0, 0.385f, 0), Vector3(0.175f, 0.14f, 0.175f), green);
+        Part(bottle->transform, "NarrowGlassNeck", PrimitiveType::Cylinder,
+             Vector3(0, 0.49f, 0), Vector3(0.075f, 0.20f, 0.075f), green);
+        Part(bottle->transform, "FoilNeck", PrimitiveType::Cylinder,
+             Vector3(0, 0.535f, 0), Vector3(0.081f, 0.13f, 0.081f), gold);
+        Part(bottle->transform, "FoilLip", PrimitiveType::Cylinder,
+             Vector3(0, 0.603f, 0), Vector3(0.087f, 0.018f, 0.087f), cream);
+        Part(bottle->transform, "FrontCreamLabel", PrimitiveType::Cube,
+             Vector3(0, 0.235f, -0.177f), Vector3(0.23f, 0.155f, 0.012f), cream);
+        Part(bottle->transform, "LabelGoldStripe", PrimitiveType::Cube,
+             Vector3(0, 0.282f, -0.186f), Vector3(0.21f, 0.021f, 0.014f), gold);
+        Part(bottle->transform, "LabelDarkStripe", PrimitiveType::Cube,
+             Vector3(0, 0.21f, -0.187f), Vector3(0.16f, 0.027f, 0.014f), green);
+        Part(bottle->transform, "GlassReflection", PrimitiveType::Cube,
+             Vector3(-0.10f, 0.21f, -0.146f), Vector3(0.019f, 0.21f, 0.012f), greenHighlight);
     }
 
-    // Diagnostic visibility-first goblet. Use Unity's known-working primitive
-    // meshes and renderer setup until the custom lathe rendering is verified.
     static void TippedGlass(Transform* parent, Vector3 at, float angle) {
-        auto glass = GameObject::New_ctor("VisibleFallenWineGoblet");
+        auto glass = GameObject::New_ctor("KnockedOverWineGlass");
         glass->transform->SetParent(parent, false);
         glass->transform->localPosition = at;
         glass->transform->localRotation = Quaternion::Euler(Vector3(0, 0, angle));
-        const Color bowl(0.67f, 0.87f, 1.0f, 1.0f);
-        const Color rim(0.93f, 0.98f, 1.0f, 1.0f);
-        // Rounded wine bowl, not the narrow cylindrical flute.
+        const Color clear(0.72f, 0.87f, 0.94f, 0.46f);
+        const Color rim(0.89f, 0.95f, 1.0f, 0.78f);
+        // Wide, rounded goblet bowl rather than the old cylindrical flute.
         Part(glass->transform, "RoundedWineBowl", PrimitiveType::Sphere,
-             Vector3(0, 0.19f, 0), Vector3(0.42f, 0.40f, 0.42f), bowl);
-        Part(glass->transform, "GlassRim", PrimitiveType::Cylinder,
-             Vector3(0, 0.38f, 0), Vector3(0.36f, 0.018f, 0.36f), rim);
-        Part(glass->transform, "SlenderStem", PrimitiveType::Cylinder,
-             Vector3(0, -0.09f, 0), Vector3(0.035f, 0.23f, 0.035f), rim);
-        Part(glass->transform, "CircularFoot", PrimitiveType::Cylinder,
-             Vector3(0, -0.23f, 0), Vector3(0.31f, 0.025f, 0.31f), rim);
+             Vector3(0, 0.18f, 0), Vector3(0.29f, 0.29f, 0.29f), clear);
+        Part(glass->transform, "WideOpenRim", PrimitiveType::Cylinder,
+             Vector3(0, 0.326f, 0), Vector3(0.235f, 0.012f, 0.235f), rim);
+        Part(glass->transform, "BowlLowerTaper", PrimitiveType::Sphere,
+             Vector3(0, 0.048f, 0), Vector3(0.17f, 0.13f, 0.17f), clear);
+        Part(glass->transform, "FineStem", PrimitiveType::Cylinder,
+             Vector3(0, -0.105f, 0), Vector3(0.024f, 0.24f, 0.024f), rim);
+        Part(glass->transform, "StemJoint", PrimitiveType::Sphere,
+             Vector3(0, -0.22f, 0), Vector3(0.060f, 0.035f, 0.060f), rim);
+        Part(glass->transform, "WideCircularFoot", PrimitiveType::Cylinder,
+             Vector3(0, -0.245f, 0), Vector3(0.22f, 0.018f, 0.22f), clear);
+        Part(glass->transform, "FootHighlight", PrimitiveType::Cylinder,
+             Vector3(0, -0.231f, 0), Vector3(0.19f, 0.008f, 0.19f), rim);
+    }
+
+    static void PartyHat(Transform* parent, Vector3 at, Color color, float tilt) {
+        auto hat = GameObject::New_ctor("DetailedNewYearsPartyHat");
+        hat->transform->SetParent(parent, false);
+        hat->transform->localPosition = at;
+        hat->transform->localRotation = Quaternion::Euler(Vector3(0, 0, tilt));
+        const Color gold(1.0f, 0.77f, 0.26f, 1);
+        const Color light(0.97f, 0.91f, 0.72f, 1);
+        // Three progressively narrower sections form a tapered party hat.
+        Part(hat->transform, "WideConeBase", PrimitiveType::Cylinder,
+             Vector3(0, 0.08f, 0), Vector3(0.29f, 0.15f, 0.29f), color);
+        Part(hat->transform, "ConeMiddle", PrimitiveType::Cylinder,
+             Vector3(0, 0.205f, 0), Vector3(0.20f, 0.14f, 0.20f), color);
+        Part(hat->transform, "ConeTip", PrimitiveType::Sphere,
+             Vector3(0, 0.31f, 0), Vector3(0.105f, 0.14f, 0.105f), color);
+        Part(hat->transform, "MetallicBrim", PrimitiveType::Cylinder,
+             Vector3(0, 0.012f, 0), Vector3(0.34f, 0.028f, 0.34f), gold);
+        Part(hat->transform, "LowerGoldBand", PrimitiveType::Cylinder,
+             Vector3(0, 0.075f, 0), Vector3(0.297f, 0.026f, 0.297f), light);
+        Part(hat->transform, "UpperGoldBand", PrimitiveType::Cylinder,
+             Vector3(0, 0.20f, 0), Vector3(0.213f, 0.018f, 0.213f), gold);
+        Part(hat->transform, "MetallicPomPom", PrimitiveType::Sphere,
+             Vector3(0, 0.405f, 0), Vector3(0.125f, 0.125f, 0.125f), gold);
+        for (int i = 0; i < 6; ++i) {
+            const float x = -0.105f + i * 0.042f;
+            Part(hat->transform, "GlitterAccent", PrimitiveType::Sphere,
+                 Vector3(x, 0.145f + (i % 2) * 0.055f, -0.135f),
+                 Vector3(0.027f, 0.027f, 0.027f), light);
+        }
     }
 
     void Create() {
-        if (root) {
-            auto* existing = root.ptr();
-            if (existing && existing->get_activeInHierarchy()) {
-                INFO("New Year's: existing wine-glass root is active");
-                return;
-            }
-            WARNING("New Year's: stale or inactive wine-glass root; rebuilding");
-            if (existing) GameObject::Destroy(existing);
-            root = nullptr;
-        }
+        if (root) return;
         auto environment = GameObject::Find("DefaultMenuEnvironment");
         if (!environment) {
-            WARNING("New Year's: wine glasses waiting for DefaultMenuEnvironment");
+            WARNING("New Year's: decorations waiting for DefaultMenuEnvironment");
             return;
         }
-        root = GameObject::New_ctor("NewYearsGroundWineGlasses");
+        root = GameObject::New_ctor("NewYearsPartyDecorations");
         if (!root) return;
-        INFO("New Year's: menu environment active=%d", environment->get_activeInHierarchy());
+        // Ground-level coordinates in the same DefaultMenuEnvironment local space
+        // used by the proven Halloween and Thanksgiving floor decorations.
+        // Slightly enlarged and moved closer so the objects are visible in VR.
         root->transform->SetParent(environment->transform, false);
         root->transform->localPosition = Vector3(0, 0, 0);
-
-        // One small fallen goblet at each of three ground positions.
-        // The third position is centered ahead of the player, away from the UI.
-        // Ground baseline follows the previously visible menu decoration locations.
-        constexpr float groundY = -0.65f;
-        constexpr float glassScale = 1.05f;
-        // A sideways goblet's widest bowl radius is 0.24 local units.
-        // Center above the ground by the scaled radius plus a small clearance.
-        constexpr float centerY = groundY + 0.24f * glassScale + 0.04f;
-        const Vector3 positions[] = {
-            Vector3(-4.6f, centerY, 7.5f),
-            Vector3(4.8f, centerY, 7.0f),
-            Vector3(0.0f, centerY, 7.8f)
+        const Vector3 spots[] = {
+            Vector3(-4.6f, -0.65f, 7.5f),
+            Vector3(4.8f, -0.65f, 7.0f),
+            Vector3(0.8f, -0.65f, 10.5f)
         };
-        const float rotations[] = {78.0f, 92.0f, 85.0f};
+        // Restore the previously visible original three decoration positions.
+        // Use the original wine-glass primitives, without bottles or hats.
+        // The former 2x scale was oversized; 0.85x keeps these subtle.
         for (int i = 0; i < 3; ++i) {
-            auto group = GameObject::New_ctor("SmallFallenWineGlass");
+            auto group = GameObject::New_ctor("OriginalSmallFallenWineGlass");
             group->transform->SetParent(root->transform, false);
-            group->transform->localPosition = positions[i];
-            group->transform->localScale = Vector3(glassScale, glassScale, glassScale);
-            TippedGlass(group->transform, Vector3(0, 0, 0), rotations[i]);
-            const auto world = group->transform->get_position();
-            INFO("New Year's: wine glass %d world=(%.2f, %.2f, %.2f) active=%d",
-                 i, world.x, world.y, world.z, group->get_activeInHierarchy());
+            group->transform->localPosition = spots[i];
+            group->transform->localScale = Vector3(0.85f, 0.85f, 0.85f);
+            // The sideways bowl radius is approximately 0.145 in local space.
+            // Raise its center to leave clearance above the floor baseline.
+            TippedGlass(group->transform, Vector3(0.0f, 0.23f, 0.0f), 77.0f);
         }
-        INFO("New Year's: three diagnostic wine goblets created; root active=%d", root->get_activeInHierarchy());
+        INFO("New Year's: three original wine glasses restored at visible ground locations");
     }
 
     void Destroy() {
