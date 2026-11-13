@@ -7,6 +7,7 @@
 #include "GlobalNamespace/LightWithIdManager.hpp"
 #include "GlobalNamespace/MainMenuViewController.hpp"
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
+#include "UnityEngine/AudioClip.hpp"
 #include "UnityEngine/Resources.hpp"
 #include "UnityEngine/SceneManagement/SceneManager.hpp"
 #include "UnityEngine/SceneManagement/SceneManagement.hpp"
@@ -19,6 +20,18 @@ using namespace UnityEngine;
 
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
 namespace NewYears::ball { void Create(); }
+
+// Observe previews without altering Beat Saber's original crossfade calls.
+MAKE_HOOK_MATCH(NewYearsPreviewObserve,
+    static_cast<void(SongPreviewPlayer::*)(AudioClip*, float, float, float, bool, System::Action*)>(&SongPreviewPlayer::CrossfadeTo),
+    void, SongPreviewPlayer* self, AudioClip* clip, float volume, float startTime,
+    float duration, bool isDefault, System::Action* callback) {
+    if (getModConfig().EnableCelebrationAmbience.GetValue() &&
+        SceneManagement::SceneManager::GetActiveScene().name != "GameCore") {
+        NewYears::ambience::SetPreviewActive(!isDefault && clip != nullptr);
+    }
+    NewYearsPreviewObserve(self, clip, volume, startTime, duration, isDefault, callback);
+}
 
 // Keep the stock menu preview from crossfading back over the custom soundtrack.
 MAKE_HOOK_MATCH(NewYearsDefaultMenuMusic, &SongPreviewPlayer::CrossfadeToDefault,
@@ -77,5 +90,6 @@ MOD_EXTERN_FUNC void late_load() noexcept {
     INSTALL_HOOK(PaperLogger, NewYearsEnvironmentColors);
     INSTALL_HOOK(PaperLogger, NewYearsMenuActivate);
     INSTALL_HOOK(PaperLogger, NewYearsDefaultMenuMusic);
+    INSTALL_HOOK(PaperLogger, NewYearsPreviewObserve);
     INFO("New Year's Theme hooks installed");
 }
