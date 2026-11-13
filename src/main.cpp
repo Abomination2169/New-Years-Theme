@@ -20,8 +20,21 @@ using namespace UnityEngine;
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
 namespace NewYears::ball { void Create(); }
 
-// Custom-song audio hooks temporarily disabled after map-loading crash.
-// Native Beat Saber menu, preview and gameplay audio remain intact.
+// Start menu music only after native initialization. Never substitute previews.
+MAKE_HOOK_MATCH(NewYearsMenuMusicOnEnable, &SongPreviewPlayer::OnEnable,
+                void, SongPreviewPlayer* self) {
+    NewYearsMenuMusicOnEnable(self);
+    if (getModConfig().EnableCelebrationAmbience.GetValue())
+        PlayNewYearsCustomSong(self);
+}
+
+MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
+                static_cast<void(SongPreviewPlayer::*)(AudioClip*, float, float, float, bool, System::Action*)>(&SongPreviewPlayer::CrossfadeTo),
+                void, SongPreviewPlayer* self, AudioClip* clip, float volume, float startTime,
+                float duration, bool isDefault, System::Action* callback) {
+    if (!isDefault) NewYearsMarkPreviewRequested();
+    NewYearsMenuMusicCrossfade(self, clip, volume, startTime, duration, isDefault, callback);
+}
 
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
                 void, LightWithIdManager* self, int lightId, Color color) {
@@ -61,6 +74,8 @@ MOD_EXTERN_FUNC void setup(CModInfo* info) noexcept {
 }
 MOD_EXTERN_FUNC void late_load() noexcept {
     il2cpp_functions::Init();
+    INSTALL_HOOK(PaperLogger, NewYearsMenuMusicOnEnable);
+    INSTALL_HOOK(PaperLogger, NewYearsMenuMusicCrossfade);
     INSTALL_HOOK(PaperLogger, NewYearsEnvironmentColors);
     INSTALL_HOOK(PaperLogger, NewYearsMenuActivate);
     INFO("New Year's Theme hooks installed");
