@@ -114,10 +114,10 @@ jobs:
               if cover and cover not in names:
                   raise SystemExit(f"QMOD is missing cover image: {cover}")
               if manifest.get("fileCopies", []) != []:
-                  raise SystemExit("Stock-music QMOD must not package custom audio")
+                  raise SystemExit("New Years QMOD must not package third-party audio")
               if "Midnight_Synthwave_Tokyo.ogg" in names:
-                  raise SystemExit("Unexpected custom soundtrack present in stock-music QMOD")
-          print("QMOD validated: Beat Saber 1.40.8, library, cover, original menu music.")
+                  raise SystemExit("Unexpected bundled third-party soundtrack")
+          print("QMOD validated: Beat Saber 1.40.8, library, cover, no bundled third-party music.")
           PY
 
       - name: Upload build artifact
