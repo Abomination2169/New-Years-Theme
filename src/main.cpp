@@ -9,7 +9,6 @@
 #include "UnityEngine/SceneManagement/SceneManager.hpp"
 #include "UnityEngine/SceneManagement/SceneManagement.hpp"
 #include "UnityEngine/Color.hpp"
-#include "UnityEngine/RenderSettings.hpp"
 #include "custom-types/shared/macros.hpp"
 #include "scotland2/shared/modloader.h"
 
@@ -26,13 +25,13 @@ MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
         NewYearsEnvironmentColors(self, lightId, color);
         return;
     }
-    const Color navy(0.012f, 0.045f, 0.19f, color.a);
-    const Color gold(0.97f, 0.65f, 0.24f, color.a);
-    const Color silver(0.62f, 0.76f, 0.97f, color.a);
+    const Color navy(0.035f, 0.095f, 0.31f, color.a);
     // A coherent midnight-blue wash across ALL environment lights.
     // Gold and silver stay as small accents on the Beat Saber neon sign.
     const Color tint = navy;
-    const float blend = 0.94f;
+    // Avoid crushing floor/near-field illumination to near-black.
+    // Retain significantly more of the original light intensity.
+    const float blend = 0.52f;
     NewYearsEnvironmentColors(self, lightId,
         Color(color.r * (1 - blend) + tint.r * blend,
               color.g * (1 - blend) + tint.g * blend,
@@ -44,13 +43,8 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
                 bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
     NewYearsMenuActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
     if (!firstActivation) return;
-    if (getModConfig().EnableMidnightLighting.GetValue()) {
+    if (getModConfig().EnableMidnightLighting.GetValue())
         NewYears::logoColors::ApplyLogoColors();
-        // Soft blue ambient fill lifts dark floor geometry without washing out
-        // the midnight-blue environment lighting or gold/silver neon accents.
-        UnityEngine::RenderSettings::set_ambientLight(Color(0.20f, 0.29f, 0.50f, 1.0f));
-        UnityEngine::RenderSettings::set_ambientIntensity(1.25f);
-    }
     if (getModConfig().EnableConfetti.GetValue())
         NewYears::confetti::CreateConfetti();
     if (getModConfig().EnableCelebrationAmbience.GetValue())
