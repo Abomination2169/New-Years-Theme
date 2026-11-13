@@ -1,4 +1,6 @@
 #include <cmath>
+#include <vector>
+#include "UnityEngine/Time.hpp"
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Transform.hpp"
 #include "UnityEngine/PrimitiveType.hpp"
@@ -14,6 +16,9 @@ using namespace UnityEngine;
 
 namespace NewYears::ball {
     static SafePtrUnity<GameObject> root;
+    static std::vector<SafePtrUnity<GameObject>> facets;
+    static std::vector<Color> facetColors;
+    static int lastBlinkPhase = -1;
 
     static void Colorize(GameObject* object, Color color) {
         if (!object) return;
@@ -24,6 +29,20 @@ namespace NewYears::ball {
         auto shader = Shader::Find("Sprites/Default");
         if (shader) material->set_shader(shader);
         material->set_color(color);
+    }
+
+    void UpdateBlink() {
+        if (!root || facets.empty()) return;
+        // Alternate bright and dim states every 0.45 seconds.
+        const int phase = static_cast<int>(Time::get_time() / 0.45f) & 1;
+        if (phase == lastBlinkPhase) return;
+        lastBlinkPhase = phase;
+        const float intensity = phase ? 0.25f : 1.0f;
+        for (size_t i = 0; i < facets.size(); ++i) {
+            if (!facets[i]) continue;
+            const Color c = facetColors[i];
+            Colorize(facets[i].ptr(), Color(c.r * intensity, c.g * intensity, c.b * intensity, c.a));
+        }
     }
 
     void Create() {
@@ -49,6 +68,9 @@ namespace NewYears::ball {
         shell->transform->localScale = Vector3(0.68f, 0.68f, 0.68f);
         Colorize(shell, Color(0.12f, 0.10f, 0.30f, 1.0f));
 
+        facets.clear();
+        facetColors.clear();
+        lastBlinkPhase = -1;
         // Faceted highlight beads arranged around a genuinely 3D sphere.
         // Vary latitude, longitude, and material color to create depth and
         // parallax rather than a flat billboard beneath the Beat Saber logo.
@@ -75,7 +97,10 @@ namespace NewYears::ball {
                     Color(0.78f, 0.28f, 1.0f, 1.0f),
                     Color(1.0f, 0.24f, 0.79f, 1.0f)
                 };
-                Colorize(bead, rainbow[(lon + (lat + 3) * 3) % 8]);
+                const Color facetColor = rainbow[(lon + (lat + 3) * 3) % 8];
+                Colorize(bead, facetColor);
+                facets.emplace_back(bead);
+                facetColors.push_back(facetColor);
             }
         }
 
@@ -89,6 +114,9 @@ namespace NewYears::ball {
     }
 
     void Destroy() {
+        facets.clear();
+        facetColors.clear();
+        lastBlinkPhase = -1;
         if (root) {
             GameObject::Destroy(root.ptr());
             root = nullptr;
