@@ -134,13 +134,13 @@ namespace NewYears::ambience {
     }
 
 
-    static bool IsMenuScene() {
+    static bool IsGameplayScene() {
         const auto scene = SceneManagement::SceneManager::GetActiveScene();
-        return const_cast<SceneManagement::Scene&>(scene).get_name() == "MenuCore";
+        return const_cast<SceneManagement::Scene&>(scene).get_name() == "GameCore";
     }
 
     void Tick() {
-        if (!IsMenuScene()) {
+        if (IsGameplayScene()) {
             if (menuSession) {
                 INFO("New Years: leaving menu; stopping soundtrack");
                 menuSession = false;
@@ -165,7 +165,7 @@ namespace NewYears::ambience {
     }
 
     void Start() {
-        if (!IsMenuScene()) return;
+        if (IsGameplayScene()) return;
         if (!menuSession) {
             menuSession = true;
             previewing = false;
@@ -207,7 +207,7 @@ namespace NewYears::ambience {
     }
 
     void SetPreviewing(bool isPreviewing) {
-        if (!menuSession || !IsMenuScene()) return;
+        if (!menuSession || IsGameplayScene()) return;
         if (previewing == isPreviewing) return;
         previewing = isPreviewing;
         if (previewing && musicSource && musicSource->get_isPlaying()) {
