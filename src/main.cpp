@@ -2,6 +2,7 @@
 #include "c.hpp"
 #include "logging.hpp"
 #include "Confetti/confetti.hpp"
+#include "Fireworks/fireworks.hpp"
 #include "Audio/ambience.hpp"
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
 #include "UnityEngine/AudioClip.hpp"
@@ -41,6 +42,8 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
 
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
                 void, LightWithIdManager* self, int lightId, Color color) {
+    if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore")
+        NewYears::fireworks::Destroy();
     if (!getModConfig().EnableMidnightLighting.GetValue() ||
         UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") {
         NewYearsEnvironmentColors(self, lightId, color);
@@ -65,6 +68,8 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
     NewYearsMenuActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
     if (getModConfig().EnableCelebrationAmbience.GetValue())
         NewYearsMainMenuActivated();
+    if (getModConfig().EnableFireworks.GetValue())
+        NewYears::fireworks::Create();
     if (!firstActivation) return;
     NewYears::ball::Create();
     if (getModConfig().EnableConfetti.GetValue())
