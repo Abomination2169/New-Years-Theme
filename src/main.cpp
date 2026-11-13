@@ -61,9 +61,11 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
             if (preview) preview->FadeOut(1.0f);
         }
     }
+    // Retry scene-dependent decorations on subsequent menu activations as well.
+    // The environment anchor may not exist during the first activation.
+    NewYears::decor::Create();
     if (!firstActivation) return;
     NewYears::ball::Create();
-    NewYears::decor::Create();
     if (getModConfig().EnableConfetti.GetValue())
         NewYears::confetti::CreateConfetti();
 }
