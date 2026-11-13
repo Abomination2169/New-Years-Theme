@@ -90,29 +90,24 @@ namespace NewYears::decor {
         return go;
     }
 
+    // Diagnostic visibility-first goblet. Use Unity's known-working primitive
+    // meshes and renderer setup until the custom lathe rendering is verified.
     static void TippedGlass(Transform* parent, Vector3 at, float angle) {
-        auto glass = GameObject::New_ctor("HollowWineGoblet");
+        auto glass = GameObject::New_ctor("VisibleFallenWineGoblet");
         glass->transform->SetParent(parent, false);
         glass->transform->localPosition = at;
         glass->transform->localRotation = Quaternion::Euler(Vector3(0, 0, angle));
-        const Color clear(0.78f,0.91f,0.98f,0.82f);
-        const Color edge(0.86f,0.94f,1.0f,0.98f);
-        Lathe(glass->transform, "HollowCurvedBowl", {
-            {0.005f,0.035f},{0.03f,0.09f},{0.08f,0.15f},
-            {0.15f,0.20f},{0.23f,0.235f},{0.31f,0.24f},
-            {0.37f,0.225f},{0.395f,0.215f},
-            {0.395f,0.207f},{0.37f,0.217f},{0.31f,0.232f},
-            {0.23f,0.227f},{0.15f,0.192f},{0.08f,0.14f},
-            {0.03f,0.078f},{0.005f,0.025f}
-        }, clear, true);
-        Lathe(glass->transform, "PolishedGlassLip", {
-            {0.391f,0.214f},{0.395f,0.219f},{0.399f,0.214f}
-        }, edge, true);
-        Lathe(glass->transform, "ThinStemAndRoundFoot", {
-            {-0.27f,0.17f},{-0.265f,0.18f},{-0.252f,0.16f},
-            {-0.24f,0.045f},{-0.22f,0.022f},{-0.01f,0.022f},
-            {0.015f,0.036f}
-        }, edge, true);
+        const Color bowl(0.67f, 0.87f, 1.0f, 1.0f);
+        const Color rim(0.93f, 0.98f, 1.0f, 1.0f);
+        // Rounded wine bowl, not the narrow cylindrical flute.
+        Part(glass->transform, "RoundedWineBowl", PrimitiveType::Sphere,
+             Vector3(0, 0.19f, 0), Vector3(0.42f, 0.40f, 0.42f), bowl);
+        Part(glass->transform, "GlassRim", PrimitiveType::Cylinder,
+             Vector3(0, 0.38f, 0), Vector3(0.36f, 0.018f, 0.36f), rim);
+        Part(glass->transform, "SlenderStem", PrimitiveType::Cylinder,
+             Vector3(0, -0.09f, 0), Vector3(0.035f, 0.23f, 0.035f), rim);
+        Part(glass->transform, "CircularFoot", PrimitiveType::Cylinder,
+             Vector3(0, -0.23f, 0), Vector3(0.31f, 0.025f, 0.31f), rim);
     }
 
     void Create() {
@@ -134,7 +129,7 @@ namespace NewYears::decor {
         constexpr float glassScale = 1.05f;
         // A sideways goblet's widest bowl radius is 0.24 local units.
         // Center above the ground by the scaled radius plus a small clearance.
-        constexpr float centerY = groundY + 0.24f * glassScale + 0.025f;
+        constexpr float centerY = groundY + 0.24f * glassScale + 0.04f;
         const Vector3 positions[] = {
             Vector3(-4.6f, centerY, 7.5f),
             Vector3(4.8f, centerY, 7.0f),
@@ -148,7 +143,7 @@ namespace NewYears::decor {
             group->transform->localScale = Vector3(glassScale, glassScale, glassScale);
             TippedGlass(group->transform, Vector3(0, 0, 0), rotations[i]);
         }
-        INFO("New Year's: three small ground-clearance wine glasses created");
+        INFO("New Year's: three diagnostic opaque wine goblets created at known-visible locations");
     }
 
     void Destroy() {
