@@ -70,6 +70,12 @@ namespace NewYears::ball {
             }
         }
 
+        auto cap = GameObject::CreatePrimitive(PrimitiveType::Cylinder);
+        cap->name = "MidnightBallTopCap";
+        cap->transform->SetParent(root->transform, false);
+        cap->transform->localPosition = Vector3(0, 0.39f, 0);
+        cap->transform->localScale = Vector3(0.16f, 0.045f, 0.16f);
+        Colorize(cap, Color(1.0f, 0.78f, 0.30f, 1.0f));
         INFO("New Year's: 3D midnight ball created below SaberLogo");
     }
 
