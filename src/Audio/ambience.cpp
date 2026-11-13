@@ -34,6 +34,7 @@ namespace NewYears::ambience {
     static std::mutex completionMutex;
     static std::queue<std::function<void()>> completions;
     static bool active = false;
+    static bool previewActive = false;
 
     void Tick() {
         std::queue<std::function<void()>> ready;
@@ -49,7 +50,7 @@ namespace NewYears::ambience {
             active = false;
             return;
         }
-        if (active && musicSource && musicClip && !musicSource->get_isPlaying()) {
+        if (active && !previewActive && musicSource && musicClip && !musicSource->get_isPlaying()) {
             musicSource->set_clip(musicClip.ptr());
             musicSource->Play();
         }
@@ -96,8 +97,20 @@ namespace NewYears::ambience {
 
     }
 
+    void SetPreviewActive(bool value) {
+        if (previewActive == value) return;
+        previewActive = value;
+        if (!active || !musicSource) return;
+        if (value) {
+            if (musicSource->get_isPlaying()) musicSource->Pause();
+        } else if (musicClip) {
+            musicSource->UnPause();
+        }
+    }
+
     void Stop() {
         active = false;
+        previewActive = false;
         if (musicSource && musicSource->get_isPlaying()) musicSource->Stop();
     }
 }
