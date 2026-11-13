@@ -80,7 +80,7 @@ jobs:
           test -n "$NDK_TOOLCHAIN"
           NDK_ROOT="${NDK_TOOLCHAIN%/build/cmake/android.toolchain.cmake}"
           echo "ANDROID_NDK_HOME=$NDK_ROOT" >> "$GITHUB_ENV"
-          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
       - name: Compile New-Years mod
         run: |
@@ -117,6 +117,13 @@ jobs:
                   raise SystemExit("New Years QMOD must not package third-party audio")
               if "Midnight_Synthwave_Tokyo.ogg" in names:
                   raise SystemExit("Unexpected bundled third-party soundtrack")
+          allowed = {"mod.json", "libnewyears.so", cover}
+          unexpected = sorted(names - allowed)
+          if unexpected:
+              raise SystemExit(f"Unexpected QMOD entries: {unexpected}")
+          for name in sorted(names):
+              item = archive.getinfo(name)
+              print(f"PACKAGE ENTRY {name}: raw={item.file_size} compressed={item.compress_size}")
           print("QMOD validated: Beat Saber 1.40.8, library, cover, no bundled third-party music.")
           PY
 
