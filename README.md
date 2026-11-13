@@ -1,12 +1,10 @@
-## 🦃 Thanksgiving Theme — Video
+## 🥂 New Years Theme — Video
 
-Watch Thanksgiving Theme in action!
+Watch New Years Theme in action!
 
-[![Thanksgiving Theme — Beat Saber](Thanksgiving-README.png)](https://www.youtube.com/watch?v=t5VIwbuC9vc)
 
-▶️ **Watch on YouTube:** https://www.youtube.com/watch?v=t5VIwbuC9vc
 
-Happy Thanksgiving!
+Happy New Years!
 
 Transform your Beat Saber menu with golden harvest lighting, seasonal decorations, and gently falling leaves!
 
