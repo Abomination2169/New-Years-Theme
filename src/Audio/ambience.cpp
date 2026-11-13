@@ -4,6 +4,8 @@
 #include "GlobalNamespace/MediaAsyncLoader.hpp"
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
 #include "UnityEngine/Behaviour.hpp"
+#include "UnityEngine/Time.hpp"
+#include "UnityEngine/AudioClip.hpp"
 #include "UnityEngine/SceneManagement/SceneManager.hpp"
 #include "UnityEngine/SceneManagement/SceneManagement.hpp"
 #include "System/Threading/Tasks/Tasks.hpp"
@@ -16,6 +18,7 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include <cmath>
 
 namespace {
     namespace fs = std::filesystem;
@@ -25,6 +28,10 @@ namespace {
     bool loading = false;
     bool previewRequested = false;
     bool playbackStarted = false;
+    SafePtrUnity<UnityEngine::AudioClip> menuClip;
+    float menuStartRealtime = 0.0f;
+    float savedMenuPosition = 0.0f;
+    bool previewPlaying = false;
     // SongCore and legacy SongLoader roots used on Beat Saber 1.40.8.
     const char* roots[] = {
         "/sdcard/ModData/com.beatgames.beatsaber/Mods/SongCore/CustomLevels",
@@ -58,7 +65,27 @@ namespace {
     }
 }
 
-void NewYearsMarkPreviewRequested() { previewRequested = true; }
+void NewYearsMarkPreviewRequested() {
+    previewRequested = true;
+    if (menuClip && playbackStarted && !previewPlaying) {
+        const float duration = menuClip->get_length();
+        const float elapsed = UnityEngine::Time::get_realtimeSinceStartup() - menuStartRealtime;
+        if (duration > 0.0f)
+            savedMenuPosition = std::fmod(std::max(0.0f, elapsed), duration);
+        previewPlaying = true;
+        INFO("New Years: saved menu position {}", savedMenuPosition);
+    }
+}
+
+float NewYearsGetMenuResumeTime(UnityEngine::AudioClip* clip, bool isDefault, float requestedTime) {
+    if (isDefault && previewPlaying && menuClip && clip == menuClip.ptr()) {
+        previewPlaying = false;
+        menuStartRealtime = UnityEngine::Time::get_realtimeSinceStartup() - savedMenuPosition;
+        INFO("New Years: resuming menu position {}", savedMenuPosition);
+        return savedMenuPosition;
+    }
+    return requestedTime;
+}
 
 void PlayNewYearsCustomSong(GlobalNamespace::SongPreviewPlayer* player) {
     if (!player) return;
@@ -83,6 +110,10 @@ void PlayNewYearsCustomSong(GlobalNamespace::SongPreviewPlayer* player) {
             if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore")
                 return;
             playbackStarted = true;
+            menuClip = clip;
+            savedMenuPosition = 0.0f;
+            previewPlaying = false;
+            menuStartRealtime = UnityEngine::Time::get_realtimeSinceStartup();
             safePlayer->_defaultAudioClip = clip;
             INFO("New Years: custom menu clip ready; starting native crossfade");
             safePlayer->CrossfadeTo(clip, 1.0f, 0.0f, 0.5f, true, nullptr);
