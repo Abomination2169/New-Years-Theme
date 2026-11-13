@@ -1,9 +1,6 @@
 #include <cmath>
 #include <vector>
 #include "UnityEngine/Time.hpp"
-#include "UnityEngine/MonoBehaviour.hpp"
-#include "custom-types/shared/macros.hpp"
-#include "UnityEngine/SceneManagement/SceneManager.hpp"
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Transform.hpp"
 #include "UnityEngine/PrimitiveType.hpp"
@@ -17,17 +14,11 @@
 
 using namespace UnityEngine;
 
-DECLARE_CLASS_CODEGEN(NewYears, BallTwinkleTicker, UnityEngine::MonoBehaviour) {
-    DECLARE_INSTANCE_METHOD(void, Update);
-};
-DEFINE_TYPE(NewYears, BallTwinkleTicker);
-
 namespace NewYears::ball {
     static SafePtrUnity<GameObject> root;
-    static SafePtrUnity<GameObject> tickerObject;
-    static std::vector<SafePtrUnity<Material>> facetMaterials;
+    static std::vector<SafePtrUnity<GameObject>> facets;
     static std::vector<Color> facetColors;
-    static float nextTwinkleUpdate = 0.0f;
+    static int lastBlinkPhase = -1;
 
     static void Colorize(GameObject* object, Color color) {
         if (!object) return;
@@ -40,21 +31,17 @@ namespace NewYears::ball {
         material->set_color(color);
     }
 
-    void UpdateTwinkle() {
-        if (!root || facetMaterials.empty()) return;
-        if (SceneManagement::SceneManager::GetActiveScene().name == "GameCore") return;
-        const float now = Time::get_unscaledTime();
-        if (now < nextTwinkleUpdate) return;
-        nextTwinkleUpdate = now + 0.0667f;
-        for (size_t i = 0; i < facetMaterials.size(); ++i) {
-            if (!facetMaterials[i]) continue;
-            const float period = 2.0f + float((i * 37) % 21) / 10.0f;
-            const float offset = float((i * 73) % 101) * 0.06221f;
-            const float wave = 0.5f + 0.5f * sinf(now * 6.2831853f / period + offset);
-            const float intensity = 0.4f + 0.6f * wave;
-            const Color base = facetColors[i];
-            facetMaterials[i]->set_color(Color(base.r * intensity, base.g * intensity,
-                                               base.b * intensity, base.a));
+    void UpdateBlink() {
+        if (!root || facets.empty()) return;
+        // Alternate bright and dim states every 0.45 seconds.
+        const int phase = static_cast<int>(Time::get_time() / 0.45f) & 1;
+        if (phase == lastBlinkPhase) return;
+        lastBlinkPhase = phase;
+        const float intensity = phase ? 0.25f : 1.0f;
+        for (size_t i = 0; i < facets.size(); ++i) {
+            if (!facets[i]) continue;
+            const Color c = facetColors[i];
+            Colorize(facets[i].ptr(), Color(c.r * intensity, c.g * intensity, c.b * intensity, c.a));
         }
     }
 
@@ -81,9 +68,9 @@ namespace NewYears::ball {
         shell->transform->localScale = Vector3(0.68f, 0.68f, 0.68f);
         Colorize(shell, Color(0.12f, 0.10f, 0.30f, 1.0f));
 
-        facetMaterials.clear();
+        facets.clear();
         facetColors.clear();
-        nextTwinkleUpdate = 0.0f;
+        lastBlinkPhase = -1;
         // Faceted highlight beads arranged around a genuinely 3D sphere.
         // Vary latitude, longitude, and material color to create depth and
         // parallax rather than a flat billboard beneath the Beat Saber logo.
@@ -112,8 +99,7 @@ namespace NewYears::ball {
                 };
                 const Color facetColor = rainbow[(lon + (lat + 3) * 3) % 8];
                 Colorize(bead, facetColor);
-                auto facetRenderer = bead->GetComponent<MeshRenderer*>();
-                facetMaterials.emplace_back(facetRenderer ? facetRenderer->get_material() : nullptr);
+                facets.emplace_back(bead);
                 facetColors.push_back(facetColor);
             }
         }
@@ -124,24 +110,16 @@ namespace NewYears::ball {
         cap->transform->localPosition = Vector3(0, 0.39f, 0);
         cap->transform->localScale = Vector3(0.16f, 0.045f, 0.16f);
         Colorize(cap, Color(1.0f, 0.78f, 0.30f, 1.0f));
-        tickerObject = GameObject::New_ctor("NewYearsBallTwinkleController");
-        if (tickerObject) tickerObject->AddComponent<NewYears::BallTwinkleTicker*>();
         INFO("New Year's: 3D midnight ball created below SaberLogo");
     }
 
     void Destroy() {
-        if (tickerObject) {
-            GameObject::Destroy(tickerObject.ptr());
-            tickerObject = nullptr;
-        }
-        facetMaterials.clear();
+        facets.clear();
         facetColors.clear();
-        nextTwinkleUpdate = 0.0f;
+        lastBlinkPhase = -1;
         if (root) {
             GameObject::Destroy(root.ptr());
             root = nullptr;
         }
     }
 }
-
-void NewYears::BallTwinkleTicker::Update() { NewYears::ball::UpdateTwinkle(); }
