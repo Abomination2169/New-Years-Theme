@@ -7,27 +7,19 @@
 #include "UnityEngine/Color.hpp"
 #include "UnityEngine/Vector3.hpp"
 #include "UnityEngine/Quaternion.hpp"
+#include "UnityEngine/Object.hpp"
+#include "UnityEngine/Collider.hpp"
 #include "logging.hpp"
 
 using namespace UnityEngine;
 
 namespace NewYears::decor {
     static SafePtrUnity<GameObject> root;
-
-    static void Tint(GameObject* go, Color color) {
-        if (!go) return;
-        auto renderer = go->GetComponent<MeshRenderer*>();
-        if (!renderer) return;
-        auto material = renderer->get_material();
-        if (!material) return;
-        auto shader = Shader::Find("Standard");
-        if (!shader) shader = Shader::Find("Sprites/Default");
-        if (shader) material->set_shader(shader);
-        material->set_color(color);
-    }
+    static SafePtrUnity<Material> glassMaterial;
+    static SafePtrUnity<Material> trimMaterial;
 
     static GameObject* Part(Transform* parent, const char* name, PrimitiveType type,
-                            Vector3 position, Vector3 scale, Color color,
+                            Vector3 position, Vector3 scale, Material* material,
                             Vector3 rotation = Vector3(0, 0, 0)) {
         auto go = GameObject::CreatePrimitive(type);
         if (!go) return nullptr;
@@ -36,7 +28,10 @@ namespace NewYears::decor {
         go->transform->localPosition = position;
         go->transform->localScale = scale;
         go->transform->localRotation = Quaternion::Euler(rotation);
-        Tint(go, color);
+        auto renderer = go->GetComponent<MeshRenderer*>();
+        if (renderer && material) renderer->set_sharedMaterial(material);
+        auto collider = go->GetComponent<Collider*>();
+        if (collider) Object::Destroy(collider);
         return go;
     }
 
@@ -45,8 +40,8 @@ namespace NewYears::decor {
         glass->transform->SetParent(parent, false);
         glass->transform->localPosition = at;
         glass->transform->localRotation = Quaternion::Euler(Vector3(0, 0, angle));
-        const Color clear(0.70f, 0.86f, 0.98f, 1.0f);
-        const Color rim(0.95f, 0.98f, 1.0f, 1.0f);
+        auto* clear = glassMaterial.ptr();
+        auto* rim = trimMaterial.ptr();
         // Wide, rounded goblet bowl rather than the old cylindrical flute.
         Part(glass->transform, "RoundedWineBowl", PrimitiveType::Sphere,
              Vector3(0, 0.18f, 0), Vector3(0.29f, 0.29f, 0.29f), clear);
@@ -71,6 +66,21 @@ namespace NewYears::decor {
             WARNING("New Year's: decorations waiting for DefaultMenuEnvironment");
             return;
         }
+        // Match Halloween tombstones: clone the known-rendering Note material.
+        auto note = GameObject::Find("Note");
+        Material* baseMaterial = nullptr;
+        if (note) {
+            auto renderer = note->GetComponent<MeshRenderer*>();
+            if (renderer) baseMaterial = renderer->get_sharedMaterial();
+        }
+        if (!baseMaterial) {
+            WARNING("New Year's: Note material unavailable; will retry decorations");
+            return;
+        }
+        glassMaterial = Object::Instantiate(baseMaterial);
+        trimMaterial = Object::Instantiate(baseMaterial);
+        glassMaterial->SetColor("_Color", Color(0.76f, 0.89f, 1.0f, 1.0f));
+        trimMaterial->SetColor("_Color", Color(0.98f, 0.97f, 0.85f, 1.0f));
         root = GameObject::New_ctor("NewYearsPartyDecorations");
         if (!root) return;
         // Ground-level coordinates in the same DefaultMenuEnvironment local space
@@ -78,34 +88,46 @@ namespace NewYears::decor {
         // Slightly enlarged and moved closer so the objects are visible in VR.
         root->transform->SetParent(environment->transform, false);
         root->transform->localPosition = Vector3(0, 0, 0);
-        // Eight of the original twenty Christmas ground-decoration sites.
-        // Use the same environment-local coordinate conversion as the snow.
+        // All twenty original Halloween tombstone positions, in the exact
+        // DefaultMenuEnvironment local coordinates (original / 2).
         const Vector3 spots[] = {
             Vector3(-2.75f, -0.65f, 8.05f),
+            Vector3(8.20f, -0.65f, 0.00f),
             Vector3(3.25f, -0.65f, 8.20f),
             Vector3(7.95f, -0.50f, 5.40f),
+            Vector3(-9.15f, -0.40f, -5.70f),
             Vector3(-4.50f, -0.85f, -3.85f),
+            Vector3(-9.05f, -0.65f, 1.35f),
             Vector3(-1.25f, -0.65f, -7.10f),
+            Vector3(-7.85f, -0.65f, 6.00f),
             Vector3(5.00f, -0.65f, -5.25f),
+            Vector3(-7.55f, -0.65f, 13.25f),
+            Vector3(12.70f, -0.45f, -7.75f),
             Vector3(3.50f, -0.65f, 14.75f),
-            Vector3(3.95f, -0.65f, -15.10f)
+            Vector3(14.95f, -0.65f, 9.60f),
+            Vector3(17.20f, -0.65f, 0.25f),
+            Vector3(-17.15f, -0.45f, 8.30f),
+            Vector3(-18.00f, -0.65f, -3.00f),
+            Vector3(-7.60f, -0.65f, -12.65f),
+            Vector3(3.95f, -0.65f, -15.10f),
+            Vector3(-12.90f, -0.35f, 3.50f)
         };
-        for (int i = 0; i < 8; ++i) {
+        for (int i = 0; i < 20; ++i) {
             auto group = GameObject::New_ctor(i % 2 == 0 ? "UprightWineGlass" : "FallenWineGlass");
             group->transform->SetParent(root->transform, false);
-            group->transform->localPosition = spots[i];
-            group->transform->localScale = Vector3(0.80f, 0.80f, 0.80f);
-            // Half upright, half on their sides. The original glass foot
-            // extends 0.254 units below its origin; keep that above ground.
+            group->transform->set_localPosition(spots[i]);
+            group->transform->set_localScale(Vector3(0.80f, 0.80f, 0.80f));
             const bool upright = (i % 2 == 0);
             WineGlass(group->transform,
                       Vector3(0, upright ? 0.28f : 0.24f, 0),
                       upright ? 0.0f : (i % 4 == 1 ? 77.0f : -77.0f));
         }
-        INFO("New Year's: eight opaque primitive wine glasses created (four upright, four fallen)");
+        INFO("New Year's: twenty wine glasses at exact Halloween tombstone positions (ten upright, ten fallen)");
     }
 
     void Destroy() {
+        glassMaterial = nullptr;
+        trimMaterial = nullptr;
         if (root) {
             GameObject::Destroy(root.ptr());
             root = nullptr;
