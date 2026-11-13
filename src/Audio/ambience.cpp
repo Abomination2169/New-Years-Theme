@@ -43,6 +43,8 @@ namespace NewYears::ambience {
     static bool previewing = false;
     static bool selected = false;
     static bool fallbackAttempted = false;
+    static bool menuSession = false;
+    static unsigned int audioGeneration = 0;
 
     // SongCore 1.40.8 plus legacy SongLoader installations.
     static std::vector<std::string> FindCustomTracks() {
@@ -93,6 +95,7 @@ namespace NewYears::ambience {
             return;
         }
         musicLoading = true;
+        const unsigned int generation = audioGeneration;
         INFO("New Year's: loading %s music", fallback ? "Morgan Alex fallback" : "custom song");
         auto task = GlobalNamespace::MediaAsyncLoader::New_ctor()
             ->LoadAudioClipFromFilePathAsync(path);
@@ -105,9 +108,14 @@ namespace NewYears::ambience {
             return;
         }
         task->GetAwaiter().OnCompleted(
-            custom_types::MakeDelegate<System::Action*>(std::function([task, fallback]() {
+            custom_types::MakeDelegate<System::Action*>(std::function([task, fallback, generation]() {
                 std::lock_guard<std::mutex> lock(completionMutex);
-                completions.emplace([task, fallback]() {
+                completions.emplace([task, fallback, generation]() {
+                    if (generation != audioGeneration || !menuSession) {
+                        musicLoading = false;
+                        INFO("New Years: discarding stale audio completion");
+                        return;
+                    }
                     musicClip = task->get_Result();
                     musicLoading = false;
                     if (musicClip) {
@@ -126,27 +134,43 @@ namespace NewYears::ambience {
     }
 
 
+    static bool IsMenuScene() {
+        const auto scene = SceneManagement::SceneManager::GetActiveScene();
+        return const_cast<SceneManagement::Scene&>(scene).get_name() == "MenuCore";
+    }
+
     void Tick() {
+        if (!IsMenuScene()) {
+            if (menuSession) {
+                INFO("New Years: leaving menu; stopping soundtrack");
+                menuSession = false;
+                active = false;
+                previewing = false;
+                ++audioGeneration;
+                if (musicSource) musicSource->Stop();
+            }
+            return;
+        }
         std::queue<std::function<void()>> ready;
         {
             std::lock_guard<std::mutex> lock(completionMutex);
             std::swap(ready, completions);
         }
         while (!ready.empty()) { ready.front()(); ready.pop(); }
-        if (!musicSource) return;
-        const auto scene = SceneManagement::SceneManager::GetActiveScene();
-        if (const_cast<SceneManagement::Scene&>(scene).get_name() == "GameCore") {
-            if (musicSource && musicSource->get_isPlaying()) musicSource->Stop();
-            active = false;
-            return;
-        }
-        if (active && !previewing && musicSource && musicClip && !musicSource->get_isPlaying()) {
+        if (!menuSession || !active || !musicSource) return;
+        if (!previewing && musicClip && !musicSource->get_isPlaying()) {
             musicSource->set_clip(musicClip.ptr());
             musicSource->Play();
         }
     }
 
     void Start() {
+        if (!IsMenuScene()) return;
+        if (!menuSession) {
+            menuSession = true;
+            previewing = false;
+            INFO("New Years: menu audio session activated");
+        }
         if (!ambientGo) {
             ambientGo = GameObject::New_ctor("NewYearsCelebrationAmbience");
             if (!ambientGo) return;
@@ -183,6 +207,7 @@ namespace NewYears::ambience {
     }
 
     void SetPreviewing(bool isPreviewing) {
+        if (!menuSession || !IsMenuScene()) return;
         if (previewing == isPreviewing) return;
         previewing = isPreviewing;
         if (previewing && musicSource && musicSource->get_isPlaying()) {
@@ -195,8 +220,12 @@ namespace NewYears::ambience {
     }
 
     void Stop() {
+        INFO("New Years: explicit soundtrack stop");
         active = false;
-        if (musicSource && musicSource->get_isPlaying()) musicSource->Stop();
+        menuSession = false;
+        previewing = false;
+        ++audioGeneration;
+        if (musicSource) musicSource->Stop();
     }
 }
 
