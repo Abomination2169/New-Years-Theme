@@ -91,7 +91,6 @@ jobs:
         run: |
           qpm qmod zip --import mod.json --skip_build
           test -s New-Years-Theme.qmod
-          cp New-Years-Theme.qmod New-Years-Theme.qmod
 
       - name: Validate QMOD archive contents
         run: |
@@ -120,7 +119,7 @@ jobs:
                   raise SystemExit(f"Unexpected audio fileCopies: {sorted(actual_audio)}")
               if not expected_audio.issubset(names):
                   raise SystemExit("QMOD is missing Celebration_Ambience.wav")
-          print("QMOD validated: 1.40.8 manifest, library, cover, and menu audio.")
+          print("QMOD validated: 1.40.8 manifest, library, cover, and quiet ambience.")
           PY
 
       - name: Upload build artifact
