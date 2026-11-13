@@ -6,7 +6,7 @@ Watch New Years Theme in action!
 
 Happy New Years!
 
-Transform your Beat Saber menu with golden harvest lighting, seasonal decorations, and gently falling leaves!
+Transform your Beat Saber menu into a dazzling midnight celebration with colorful fireworks, falling confetti, and custom songs from your very own playlist!
 
 Based on the fantastic Christmas Mod by Vcmikuu and CatsaCode.
 
