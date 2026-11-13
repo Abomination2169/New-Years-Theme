@@ -25,12 +25,13 @@ MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
         NewYearsEnvironmentColors(self, lightId, color);
         return;
     }
-    const Color navy(0.025f, 0.055f, 0.23f, color.a);
+    const Color navy(0.012f, 0.045f, 0.19f, color.a);
     const Color gold(0.97f, 0.65f, 0.24f, color.a);
     const Color silver(0.62f, 0.76f, 0.97f, color.a);
-    const Color tint = (lightId % 5 == 0) ? gold
-                     : (lightId % 5 == 1) ? silver : navy;
-    const float blend = 0.78f;
+    // A coherent midnight-blue wash across ALL environment lights.
+    // Gold and silver stay as small accents on the Beat Saber neon sign.
+    const Color tint = navy;
+    const float blend = 0.94f;
     NewYearsEnvironmentColors(self, lightId,
         Color(color.r * (1 - blend) + tint.r * blend,
               color.g * (1 - blend) + tint.g * blend,
