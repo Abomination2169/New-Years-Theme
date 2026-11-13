@@ -1,0 +1,92 @@
+#include "main.hpp"
+#include "c.hpp"
+#include "logging.hpp"
+#include "Confetti/confetti.hpp"
+#include "Fireworks/fireworks.hpp"
+#include "Audio/ambience.hpp"
+#include "GlobalNamespace/SongPreviewPlayer.hpp"
+#include "UnityEngine/AudioClip.hpp"
+
+#include "GlobalNamespace/LightWithIdManager.hpp"
+#include "GlobalNamespace/MainMenuViewController.hpp"
+#include "UnityEngine/SceneManagement/SceneManager.hpp"
+#include "UnityEngine/SceneManagement/SceneManagement.hpp"
+#include "UnityEngine/Color.hpp"
+#include "custom-types/shared/macros.hpp"
+#include "scotland2/shared/modloader.h"
+
+using namespace GlobalNamespace;
+using namespace UnityEngine;
+
+static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
+namespace NewYears::ball { void Create(); }
+
+// Start menu music only after native initialization. Never substitute previews.
+MAKE_HOOK_MATCH(NewYearsMenuMusicOnEnable, &SongPreviewPlayer::OnEnable,
+                void, SongPreviewPlayer* self) {
+    NewYearsMenuMusicOnEnable(self);
+    if (getModConfig().EnableCelebrationAmbience.GetValue())
+        NewYearsRememberMenuPlayer(self);
+}
+
+MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
+                static_cast<void(SongPreviewPlayer::*)(AudioClip*, float, float, float, bool, System::Action*)>(&SongPreviewPlayer::CrossfadeTo),
+                void, SongPreviewPlayer* self, AudioClip* clip, float volume, float startTime,
+                float duration, bool isDefault, System::Action* callback) {
+    // Startup crossfades can be non-default too; do not cancel the initial
+    // asynchronous menu track before it has started playing.
+    if (!isDefault && NewYearsMenuMusicHasStarted()) NewYearsMarkPreviewRequested();
+    const float resumeTime = NewYearsGetMenuResumeTime(clip, isDefault, startTime);
+    NewYearsMenuMusicCrossfade(self, clip, volume, resumeTime, duration, isDefault, callback);
+}
+
+MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
+                void, LightWithIdManager* self, int lightId, Color color) {
+    if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore")
+        NewYears::fireworks::Destroy();
+    if (!getModConfig().EnableMidnightLighting.GetValue() ||
+        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") {
+        NewYearsEnvironmentColors(self, lightId, color);
+        return;
+    }
+    const Color navy(0.035f, 0.095f, 0.31f, color.a);
+    // A coherent midnight-blue wash across ALL environment lights.
+    // Gold and silver stay as small accents on the Beat Saber neon sign.
+    const Color tint = navy;
+    // Avoid crushing floor/near-field illumination to near-black.
+    // Retain significantly more of the original light intensity.
+    const float blend = 0.52f;
+    NewYearsEnvironmentColors(self, lightId,
+        Color(color.r * (1 - blend) + tint.r * blend,
+              color.g * (1 - blend) + tint.g * blend,
+              color.b * (1 - blend) + tint.b * blend, color.a));
+}
+
+MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
+                void, MainMenuViewController* self,
+                bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
+    NewYearsMenuActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
+    if (getModConfig().EnableCelebrationAmbience.GetValue())
+        NewYearsMainMenuActivated();
+    if (getModConfig().EnableFireworks.GetValue())
+        NewYears::fireworks::Create();
+    if (!firstActivation) return;
+    NewYears::ball::Create();
+    if (getModConfig().EnableConfetti.GetValue())
+        NewYears::confetti::CreateConfetti();
+}
+
+MOD_EXTERN_FUNC void setup(CModInfo* info) noexcept {
+    *info = modInfo.to_c();
+    getModConfig().Init(modInfo);
+    Paper::Logger::RegisterFileContextId(PaperLogger.tag);
+    INFO("New Year's Theme configured");
+}
+MOD_EXTERN_FUNC void late_load() noexcept {
+    il2cpp_functions::Init();
+    INSTALL_HOOK(PaperLogger, NewYearsMenuMusicOnEnable);
+    INSTALL_HOOK(PaperLogger, NewYearsMenuMusicCrossfade);
+    INSTALL_HOOK(PaperLogger, NewYearsEnvironmentColors);
+    INSTALL_HOOK(PaperLogger, NewYearsMenuActivate);
+    INFO("New Year's Theme hooks installed");
+}
