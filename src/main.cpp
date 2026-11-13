@@ -16,11 +16,12 @@ using namespace GlobalNamespace;
 using namespace UnityEngine;
 
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
-namespace NewYears::ball { void Create(); }
+namespace NewYears::ball { void Create(); void UpdateBlink(); }
 namespace NewYears::logoColors { void ApplyLogoColors(); }
 
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
                 void, LightWithIdManager* self, int lightId, Color color) {
+    NewYears::ball::UpdateBlink();
     if (!getModConfig().EnableMidnightLighting.GetValue() ||
         UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") {
         NewYearsEnvironmentColors(self, lightId, color);
