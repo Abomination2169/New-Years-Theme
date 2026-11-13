@@ -9,6 +9,7 @@
 #include "UnityEngine/SceneManagement/SceneManager.hpp"
 #include "UnityEngine/SceneManagement/SceneManagement.hpp"
 #include "UnityEngine/Color.hpp"
+#include "UnityEngine/Time.hpp"
 #include "custom-types/shared/macros.hpp"
 #include "scotland2/shared/modloader.h"
 
@@ -17,11 +18,18 @@ using namespace UnityEngine;
 
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
 namespace NewYears::ball { void Create(); void UpdateBlink(); }
-namespace NewYears::logoColors { void ApplyLogoColors(); }
+
+// Time is queried continuously by the menu; drive facet blinking independently
+// of environment light color changes, which may stop after initialization.
+MAKE_HOOK_MATCH(NewYearsBlinkTick, &UnityEngine::Time::get_deltaTime,
+                float) {
+    const float dt = NewYearsBlinkTick();
+    NewYears::ball::UpdateBlink();
+    return dt;
+}
 
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
                 void, LightWithIdManager* self, int lightId, Color color) {
-    NewYears::ball::UpdateBlink();
     if (!getModConfig().EnableMidnightLighting.GetValue() ||
         UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") {
         NewYearsEnvironmentColors(self, lightId, color);
@@ -46,7 +54,6 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
     NewYearsMenuActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
     if (!firstActivation) return;
     NewYears::ball::Create();
-    NewYears::logoColors::ApplyLogoColors();
     if (getModConfig().EnableConfetti.GetValue())
         NewYears::confetti::CreateConfetti();
     if (getModConfig().EnableCelebrationAmbience.GetValue())
@@ -61,6 +68,7 @@ MOD_EXTERN_FUNC void setup(CModInfo* info) noexcept {
 }
 MOD_EXTERN_FUNC void late_load() noexcept {
     il2cpp_functions::Init();
+    INSTALL_HOOK(PaperLogger, NewYearsBlinkTick);
     INSTALL_HOOK(PaperLogger, NewYearsEnvironmentColors);
     INSTALL_HOOK(PaperLogger, NewYearsMenuActivate);
     INFO("New Year's Theme hooks installed");
