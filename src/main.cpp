@@ -42,8 +42,7 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
 
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
                 void, LightWithIdManager* self, int lightId, Color color) {
-    if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore")
-        {
+    if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") {
         NewYears::fireworks::Destroy();
         NewYears::confetti::DestroyConfetti();
         NewYears::ball::Destroy();
