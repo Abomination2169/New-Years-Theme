@@ -74,8 +74,14 @@ namespace NewYears::decor {
             if (renderer) baseMaterial = renderer->get_sharedMaterial();
         }
         if (!baseMaterial) {
-            WARNING("New Year's: Note material unavailable; will retry decorations");
-            return;
+            WARNING("New Year's: Note material unavailable; using primitive shader fallback");
+            auto shader = Shader::Find("Sprites/Default");
+            if (!shader) shader = Shader::Find("Standard");
+            if (!shader) {
+                WARNING("New Year's: no compatible material shader found; decorations not created");
+                return;
+            }
+            baseMaterial = Material::New_ctor(shader);
         }
         glassMaterial = Object::Instantiate(baseMaterial);
         trimMaterial = Object::Instantiate(baseMaterial);
@@ -88,6 +94,7 @@ namespace NewYears::decor {
         // Slightly enlarged and moved closer so the objects are visible in VR.
         root->transform->SetParent(environment->transform, false);
         root->transform->localPosition = Vector3(0, 0, 0);
+        INFO("New Year's: decoration root created under DefaultMenuEnvironment");
         // All twenty original Halloween tombstone positions, in the exact
         // DefaultMenuEnvironment local coordinates (original / 2).
         const Vector3 spots[] = {
@@ -122,7 +129,8 @@ namespace NewYears::decor {
                       Vector3(0, upright ? 0.28f : 0.24f, 0),
                       upright ? 0.0f : (i % 4 == 1 ? 77.0f : -77.0f));
         }
-        INFO("New Year's: twenty wine glasses at exact Halloween tombstone positions (ten upright, ten fallen)");
+        INFO("New Year's: twenty wine glasses instantiated at Halloween tombstone sites (ten upright, ten fallen)");
+        INFO("New Year's: decoration hierarchy active=%d", root->get_activeInHierarchy());
     }
 
     void Destroy() {
