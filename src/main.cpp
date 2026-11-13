@@ -21,36 +21,25 @@ using namespace UnityEngine;
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
 namespace NewYears::ball { void Create(); }
 
-// Allow selected map previews, but never start the stock menu track
-// when Beat Saber requests its default preview after a selection ends.
-MAKE_HOOK_MATCH(NewYearsSongPreview,
+// Let Beat Saber play selected map previews without competing menu audio.
+MAKE_HOOK_MATCH(NewYearsSongPreview, 
                 static_cast<void(SongPreviewPlayer::*)(AudioClip*, float, float, float, bool, System::Action*)>(&SongPreviewPlayer::CrossfadeTo),
                 void, SongPreviewPlayer* self, AudioClip* clip, float volume,
                 float startTime, float duration, bool isDefault,
                 System::Action* onFadeOutCallback) {
-    const bool themeMenuAudio = getModConfig().EnableCelebrationAmbience.GetValue() &&
-        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name != "GameCore";
-    if (themeMenuAudio) {
-        if (isDefault || clip == nullptr) {
-            // CrossfadeTo can also restore the stock menu music. Fade out
-            // the existing preview instead of passing that default clip on.
-            NewYears::ambience::SetPreviewing(false);
-            if (self) self->FadeOut(0.3f);
-            INFO("New Years: suppressed default CrossfadeTo music");
-            return;
-        }
-        NewYears::ambience::SetPreviewing(true);
+    if (getModConfig().EnableCelebrationAmbience.GetValue() &&
+        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name != "GameCore") {
+        NewYears::ambience::SetPreviewing(!isDefault && clip != nullptr);
     }
     NewYearsSongPreview(self, clip, volume, startTime, duration, isDefault, onFadeOutCallback);
 }
 
+// Suppress only the game's default menu music; resume our soundtrack instead.
 MAKE_HOOK_MATCH(NewYearsDefaultMenuMusic, &SongPreviewPlayer::CrossfadeToDefault,
                 void, SongPreviewPlayer* self) {
     if (getModConfig().EnableCelebrationAmbience.GetValue() &&
         UnityEngine::SceneManagement::SceneManager::GetActiveScene().name != "GameCore") {
         NewYears::ambience::SetPreviewing(false);
-        if (self) self->FadeOut(0.3f);
-        INFO("New Years: suppressed default CrossfadeToDefault music");
         return;
     }
     NewYearsDefaultMenuMusic(self);
