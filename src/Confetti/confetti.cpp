@@ -90,6 +90,8 @@ namespace NewYears::confetti {
         auto material = renderer->get_material();
         if (!shader || !material) {
             WARNING("New Year's: confetti shader unavailable");
+            GameObject::Destroy(confettiGo.ptr());
+            confettiGo = nullptr;
             return;
         }
         material->set_shader(shader);
