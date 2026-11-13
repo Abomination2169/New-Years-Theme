@@ -7,6 +7,7 @@
 #include "GlobalNamespace/LightWithIdManager.hpp"
 #include "GlobalNamespace/MainMenuViewController.hpp"
 #include "UnityEngine/SceneManagement/SceneManager.hpp"
+#include "UnityEngine/SceneManagement/SceneManagement.hpp"
 #include "UnityEngine/Color.hpp"
 #include "custom-types/shared/macros.hpp"
 #include "scotland2/shared/modloader.h"
