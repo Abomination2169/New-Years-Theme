@@ -17,6 +17,7 @@ using namespace UnityEngine;
 
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
 namespace NewYears::logoColors { void ApplyLogoColors(); }
+namespace NewYears::ball { void Create(); }
 
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
                 void, LightWithIdManager* self, int lightId, Color color) {
@@ -45,6 +46,7 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
     if (!firstActivation) return;
     if (getModConfig().EnableMidnightLighting.GetValue())
         NewYears::logoColors::ApplyLogoColors();
+    NewYears::ball::Create();
     if (getModConfig().EnableConfetti.GetValue())
         NewYears::confetti::CreateConfetti();
     if (getModConfig().EnableCelebrationAmbience.GetValue())
