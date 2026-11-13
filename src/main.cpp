@@ -6,6 +6,7 @@
 
 #include "GlobalNamespace/LightWithIdManager.hpp"
 #include "GlobalNamespace/MainMenuViewController.hpp"
+#include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
 #include "UnityEngine/AudioClip.hpp"
 #include "UnityEngine/Resources.hpp"
@@ -63,6 +64,18 @@ MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
               color.b * (1 - blend) + tint.b * blend, color.a));
 }
 
+// Song selection can reactivate directly after gameplay without MainMenu DidActivate.
+MAKE_HOOK_MATCH(NewYearsLevelSelectionActivate, &LevelSelectionFlowCoordinator::DidActivate,
+                void, LevelSelectionFlowCoordinator* self,
+                bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
+    NewYearsLevelSelectionActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
+    if (getModConfig().EnableCelebrationAmbience.GetValue() &&
+        SceneManagement::SceneManager::GetActiveScene().name != "GameCore") {
+        NewYears::ambience::Start();
+        INFO("New Years: soundtrack rearmed on song selection");
+    }
+}
+
 MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
                 void, MainMenuViewController* self,
                 bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
@@ -89,6 +102,7 @@ MOD_EXTERN_FUNC void late_load() noexcept {
     il2cpp_functions::Init();
     INSTALL_HOOK(PaperLogger, NewYearsEnvironmentColors);
     INSTALL_HOOK(PaperLogger, NewYearsMenuActivate);
+    INSTALL_HOOK(PaperLogger, NewYearsLevelSelectionActivate);
     INSTALL_HOOK(PaperLogger, NewYearsDefaultMenuMusic);
     INSTALL_HOOK(PaperLogger, NewYearsPreviewObserve);
     INFO("New Year's Theme hooks installed");
