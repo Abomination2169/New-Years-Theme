@@ -19,7 +19,7 @@ using namespace UnityEngine;
 
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
 namespace NewYears::ball { void Create(); }
-namespace NewYears::logoColors { void ApplyLogoColors(); }
+namespace NewYears::decor { void Create(); }
 
 // Keep the stock menu preview from crossfading back over the custom soundtrack.
 MAKE_HOOK_MATCH(NewYearsDefaultMenuMusic, &SongPreviewPlayer::CrossfadeToDefault,
@@ -61,8 +61,8 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
             if (preview) preview->FadeOut(1.0f);
         }
     }
-    // Retire the unverified floor-light effect; recolor the menu sign instead.
-    NewYears::logoColors::ApplyLogoColors();
+    // Leave the original logo colors untouched; create ground decorations.
+    NewYears::decor::Create();
     if (!firstActivation) return;
     NewYears::ball::Create();
     if (getModConfig().EnableConfetti.GetValue())
