@@ -20,7 +20,7 @@ namespace NewYears::ball {
 
     void Create() {
         if (root) return;
-        auto* logo = GameObject::Find("SaberLogo");
+        auto logo = GameObject::Find("SaberLogo");
         if (!logo) {
             WARNING("New Year's: SaberLogo anchor not found");
             return;
@@ -28,7 +28,7 @@ namespace NewYears::ball {
 
         // Retain the original ball anchor, orientation and approximate silhouette.
         // One transparent, textured quad replaces the 100+ primitive spheres.
-        auto* quad = GameObject::CreatePrimitive(PrimitiveType::Quad);
+        auto quad = GameObject::CreatePrimitive(PrimitiveType::Quad);
         if (!quad) return;
         quad->name = "NewYearsMidnightBall";
         const Vector3 p = logo->transform->position;
@@ -36,19 +36,19 @@ namespace NewYears::ball {
         quad->transform->rotation = Quaternion::get_identity();
         quad->transform->localScale = Vector3(4.3f, 4.3f, 1.0f);
 
-        auto* renderer = quad->GetComponent<MeshRenderer*>();
-        auto* shader = Shader::Find("Sprites/Default");
+        auto renderer = quad->GetComponent<MeshRenderer*>();
+        auto shader = Shader::Find("Sprites/Default");
         if (!renderer || !shader) {
             WARNING("New Year's: PNG billboard renderer/shader unavailable");
             GameObject::Destroy(quad);
             return;
         }
-        auto* material = renderer->get_material();
+        auto material = renderer->get_material();
         if (!material) {
             GameObject::Destroy(quad);
             return;
         }
-        auto* texture = BSML::Utilities::LoadTextureRaw(
+        auto texture = BSML::Utilities::LoadTextureRaw(
             static_cast<ArrayW<uint8_t>>(IncludedAssets::new_year_crystal_ball_png));
         if (!texture) {
             WARNING("New Year's: PNG billboard texture unavailable");
