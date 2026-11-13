@@ -89,21 +89,21 @@ namespace NewYears::decor {
 
     void Create() {
         if (root) return;
-        auto logo = GameObject::Find("SaberLogo");
-        if (!logo) {
-            WARNING("New Year's: decorations waiting for SaberLogo");
+        auto environment = GameObject::Find("DefaultMenuEnvironment");
+        if (!environment) {
+            WARNING("New Year's: decorations waiting for DefaultMenuEnvironment");
             return;
         }
         root = GameObject::New_ctor("NewYearsPartyDecorations");
         if (!root) return;
         // Three modest groups arranged around the menu, relative to the existing logo.
         // Keep the center free for UI and the midnight ball.
-        const auto p = logo->transform->position;
-        root->transform->position = Vector3(p.x, p.y - 5.45f, p.z + 1.0f);
+        root->transform->SetParent(environment->transform, false);
+        root->transform->localPosition = Vector3(0, 0, 0);
         const Vector3 spots[] = {
-            Vector3(-3.3f, 0, 0.5f),
-            Vector3(3.4f, 0, 0.4f),
-            Vector3(0.9f, 0, 3.0f)
+            Vector3(-7.55f, -0.65f, 13.25f),
+            Vector3(7.95f, -0.50f, 5.40f),
+            Vector3(3.25f, -0.65f, 14.60f)
         };
         const Color hats[] = {
             Color(0.20f, 0.70f, 1.0f, 1),
@@ -118,7 +118,7 @@ namespace NewYears::decor {
             TippedGlass(group->transform, Vector3(0.28f, 0.10f, 0.06f), 77.0f);
             PartyHat(group->transform, Vector3(0.55f, 0, -0.15f), hats[i], i == 1 ? -12.0f : 8.0f);
         }
-        INFO("New Year's: three party decoration clusters created");
+        INFO("New Year's: three floor-level party decoration clusters created");
     }
 
     void Destroy() {
