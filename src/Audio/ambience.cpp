@@ -3,6 +3,7 @@
 #include "logging.hpp"
 #include "GlobalNamespace/MediaAsyncLoader.hpp"
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
+#include "UnityEngine/Behaviour.hpp"
 #include "UnityEngine/SceneManagement/SceneManager.hpp"
 #include "UnityEngine/SceneManagement/SceneManagement.hpp"
 #include "System/Threading/Tasks/Tasks.hpp"
@@ -22,6 +23,8 @@ namespace {
     size_t nextTrack = 0;
     bool scanned = false;
     bool loading = false;
+    bool previewRequested = false;
+    bool playbackStarted = false;
     // SongCore and legacy SongLoader roots used on Beat Saber 1.40.8.
     const char* roots[] = {
         "/sdcard/ModData/com.beatgames.beatsaber/Mods/SongCore/CustomLevels",
@@ -55,26 +58,33 @@ namespace {
     }
 }
 
+void NewYearsMarkPreviewRequested() { previewRequested = true; }
+
 void PlayNewYearsCustomSong(GlobalNamespace::SongPreviewPlayer* player) {
     if (!player) return;
     ScanTracks();
-    if (tracks.empty() || loading) return; // Keep stock music if unavailable.
+    if (tracks.empty() || loading || playbackStarted) return; // Keep stock music if unavailable.
     const std::string path = tracks[nextTrack++ % tracks.size()];
     loading = true;
+    previewRequested = false;
+    SafePtrUnity<GlobalNamespace::SongPreviewPlayer> safePlayer = player;
     INFO("New Years: loading custom menu track {}", path);
     auto task = GlobalNamespace::MediaAsyncLoader::New_ctor()->LoadAudioClipFromFilePathAsync(path);
     task->GetAwaiter().OnCompleted(custom_types::MakeDelegate<System::Action*>(
-        std::function([player, task]() {
+        std::function([safePlayer, task]() {
             loading = false;
             auto clip = task->get_Result();
-            if (!player || !clip) {
+            if (!safePlayer || !clip) {
                 WARNING("New Years: custom menu clip load failed");
                 return;
             }
+            if (previewRequested || playbackStarted || !safePlayer->get_isActiveAndEnabled())
+                return;
             if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore")
                 return;
-            player->_defaultAudioClip = clip;
+            playbackStarted = true;
+            safePlayer->_defaultAudioClip = clip;
             INFO("New Years: custom menu clip ready; starting native crossfade");
-            player->CrossfadeTo(clip, 1.0f, 0.0f, 0.5f, true, nullptr);
+            safePlayer->CrossfadeTo(clip, 1.0f, 0.0f, 0.5f, true, nullptr);
         })));
 }
