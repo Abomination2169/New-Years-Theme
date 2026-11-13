@@ -1,27 +1,26 @@
 # 🎆 New Year's Theme — Beat Saber Quest
 
-Development preview for **Beat Saber 1.40.8_7379** on Quest 3.
-
-Celebrate in a midnight-blue environment with gold and silver menu lighting, gently falling multicolored streamers, and a quiet ambient soundtrack layered beneath **Beat Saber's original menu music**.
+A seasonal menu theme for **Meta Quest 3 · Beat Saber 1.40.8_7379**.
 
 ## Features
-- Standalone identity: `newyears`, `libnewyears.so`, `New-Years-Theme.qmod`
-- Midnight navy environment-light tint with gold/silver accent lights
-- Original Beat Saber neon sign retained, with gold BEAT and silver SABER
-- One emitter adapted from Halloween Theme 1.40.8, with reduced density, slower gravity and world collision
-- Original six-color confetti spritesheet: red, blue, green, purple, gold and silver
-- Original low-volume synthesized prototype of distant party ambience and fireworks, played via a separate Unity AudioSource
-- The QMOD contains no copy of Beat Saber's original menu music and does not replace its default audio clip
+- Detailed illuminated New Year's ball with a **Happy New Year!** banner
+- Midnight-blue menu lighting and falling confetti
+- Native Beat Saber fireworks controller integration (uses existing game effects where available)
+- Menu music selected from your **installed SongCore custom songs** (`.egg` or `.ogg`), without bundling copyrighted tracks
+- Song previews remain audible; custom menu music resumes after previews
+- Menu music starts when the main menu activates, rather than during early audio initialization
+- Independent config switches for confetti, fireworks, lighting and menu music
 
-## Status
-**Experimental development branch, not yet validated in-game.** GitHub Actions compiling and packaging successfully will not establish that lighting, streamers, collision or WAV ambience work correctly on the Quest. Please test before a public release or Mods Before Friday submission.
+## Install
+Install the release QMOD with a compatible Quest mod manager on **Beat Saber 1.40.8_7379**. SongCore and installed custom songs are needed for custom menu music; otherwise Beat Saber's normal menu audio remains available. Do not install simultaneously with another theme that modifies the same menu environment unless coordinated through Holiday Theme Switcher.
 
-## Compatibility
-Targets **Beat Saber 1.40.8_7379, Quest 3**. Do not enable this standalone preview alongside Halloween Theme until Holiday Theme Switcher coordinates theme activation, as both mods hook menu lighting.
+## Build from source
+Use the included GitHub Actions workflow, or install QPM CLI and the Quest Android NDK, then run `qpm restore`, `qpm qmod manifest`, configure CMake and build, and run `qpm qmod zip --import mod.json --skip_build`. The workflow validates the packaged QMOD and publishes both the QMOD and a source archive for version tags.
+
+## Compatibility and limitations
+The mod is tested on Quest 3 with Beat Saber 1.40.8. The fireworks integration enables an existing native controller when available; it does not synthesize new fireworks or guarantee audio in every environment. Automatic advancement between menu tracks is not yet implemented. Test before using with other environment-changing mods.
 
 ## Credits and licensing
-New Year's Theme is derived from [Halloween Theme](https://github.com/Abomination2169/Halloween-Theme), which derives from [Christmas Theme](https://github.com/vcmikuu/ChristmasTheme) by **laynia (vcmikuu)** and **CatsaCode**. The latter authors authorized GPLv3 reuse with proper attribution. They are not responsible for this derivative.
+Created by **Abomination2169** with AI assistance. Derived from [Halloween Theme](https://github.com/Abomination2169/Halloween-Theme), itself inspired by [Christmas Theme](https://github.com/vcmikuu/ChristmasTheme) by laynia (vcmikuu) and CatsaCode. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for attribution and asset details.
 
-Covered source code: **GNU GPL-3.0-only**, see [LICENSE](LICENSE). Asset details and contributor credits: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-
-Developed by Abomination2169 with AI assistance. No commercial songs, fan remixes, or copyrighted countdown recordings are bundled.
+Source code is licensed under **GNU GPLv3**; see [LICENSE](LICENSE). No installed custom-song recordings are redistributed.
