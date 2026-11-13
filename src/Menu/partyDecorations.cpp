@@ -17,7 +17,7 @@ namespace NewYears::decor {
 
     void Create() {
         if (root) return;
-        auto* environment = GameObject::Find("DefaultMenuEnvironment");
+        auto environment = GameObject::Find("DefaultMenuEnvironment");
         if (!environment) {
             WARNING("New Year's: snow waiting for DefaultMenuEnvironment");
             return;
@@ -70,7 +70,7 @@ namespace NewYears::decor {
         material->SetFloat("_Metallic", 0.0f);
 
         for (const auto& spot : spots) {
-            auto* pile = GameObject::CreatePrimitive(PrimitiveType::Sphere);
+            auto pile = GameObject::CreatePrimitive(PrimitiveType::Sphere);
             if (!pile) continue;
             pile->set_name("IceBlueSnowDrift");
             pile->transform->SetParent(root->transform, false);
