@@ -9,7 +9,9 @@ manifest = json.loads((root / "mod.template.json").read_text())
 assert qpm["info"]["id"] == shared["config"]["info"]["id"] == manifest["id"] == "newyears"
 assert manifest["packageVersion"] == "1.40.8_7379"
 assert manifest["version"] == qpm["info"]["version"] == "1.0.0"
+assert manifest["description"] == "Happy New Years!"
 assert qpm["info"]["additionalData"]["overrideSoName"] == "libnewyears.so"
+assert manifest["coverImage"] == "NewYears-README.png"
 assert (root / manifest["coverImage"]).is_file()
 assert (root / "assets/confetti_streamers.png").is_file()
 assert (root / "src/Confetti/confetti.cpp").is_file()
@@ -22,6 +24,8 @@ assert "INSTALL_HOOK(PaperLogger, NewYearsMenuMusicCrossfade)" in main_source
 assert "NewYearsRememberMenuPlayer(self)" in main_source
 assert "NewYearsMainMenuActivated()" in main_source
 assert "NewYears::fireworks::Create()" in main_source
+assert "NewYears::confetti::DestroyConfetti()" in main_source
+assert "NewYears::ball::Destroy()" in main_source
 assert "PlayNewYearsMenuSong" not in main_source
 assert "NewYearsDefaultMenuMusic" not in main_source
 assert manifest["fileCopies"] == []

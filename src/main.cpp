@@ -19,7 +19,7 @@ using namespace GlobalNamespace;
 using namespace UnityEngine;
 
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
-namespace NewYears::ball { void Create(); }
+namespace NewYears::ball { void Create(); void Destroy(); }
 
 // Start menu music only after native initialization. Never substitute previews.
 MAKE_HOOK_MATCH(NewYearsMenuMusicOnEnable, &SongPreviewPlayer::OnEnable,
@@ -42,8 +42,11 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
 
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
                 void, LightWithIdManager* self, int lightId, Color color) {
-    if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore")
+    if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") {
         NewYears::fireworks::Destroy();
+        NewYears::confetti::DestroyConfetti();
+        NewYears::ball::Destroy();
+    }
     if (!getModConfig().EnableMidnightLighting.GetValue() ||
         UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") {
         NewYearsEnvironmentColors(self, lightId, color);
@@ -70,7 +73,6 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
         NewYearsMainMenuActivated();
     if (getModConfig().EnableFireworks.GetValue())
         NewYears::fireworks::Create();
-    if (!firstActivation) return;
     NewYears::ball::Create();
     if (getModConfig().EnableConfetti.GetValue())
         NewYears::confetti::CreateConfetti();
