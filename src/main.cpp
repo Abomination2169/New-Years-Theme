@@ -33,7 +33,8 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
                 void, SongPreviewPlayer* self, AudioClip* clip, float volume, float startTime,
                 float duration, bool isDefault, System::Action* callback) {
     if (!isDefault) NewYearsMarkPreviewRequested();
-    NewYearsMenuMusicCrossfade(self, clip, volume, startTime, duration, isDefault, callback);
+    const float resumeTime = NewYearsGetMenuResumeTime(clip, isDefault, startTime);
+    NewYearsMenuMusicCrossfade(self, clip, volume, resumeTime, duration, isDefault, callback);
 }
 
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
