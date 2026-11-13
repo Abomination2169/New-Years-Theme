@@ -26,13 +26,13 @@ namespace NewYears::ball {
             return;
         }
 
-        // Raise the ball 0.30 Unity units to align its hanging cap with the B in SABER.
+        // Raise the ball 0.50 Unity units to align its hanging cap with the B in SABER.
         // One transparent, textured quad replaces the 100+ primitive spheres.
         auto quad = GameObject::CreatePrimitive(PrimitiveType::Quad);
         if (!quad) return;
         quad->name = "NewYearsMidnightBall";
         const Vector3 p = logo->transform->position;
-        quad->transform->position = Vector3(p.x - 0.30f, p.y - 3.85f, p.z + 0.15f);
+        quad->transform->position = Vector3(p.x - 0.30f, p.y - 3.65f, p.z + 0.15f);
         quad->transform->rotation = Quaternion::get_identity();
         quad->transform->localScale = Vector3(4.3f, 4.3f, 1.0f);
 
