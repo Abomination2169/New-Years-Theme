@@ -42,12 +42,12 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
                 void, MainMenuViewController* self,
                 bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
     NewYearsMenuActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
+    if (getModConfig().EnableCelebrationAmbience.GetValue())
+        NewYears::ambience::Start();
     if (!firstActivation) return;
     NewYears::ball::Create();
     if (getModConfig().EnableConfetti.GetValue())
         NewYears::confetti::CreateConfetti();
-    if (getModConfig().EnableCelebrationAmbience.GetValue())
-        NewYears::ambience::Start();
 }
 
 MOD_EXTERN_FUNC void setup(CModInfo* info) noexcept {
