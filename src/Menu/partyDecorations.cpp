@@ -134,14 +134,15 @@ namespace NewYears::decor {
         }
         root = GameObject::New_ctor("NewYearsPartyDecorations");
         if (!root) return;
-        // Three modest groups arranged around the menu, relative to the existing logo.
-        // Keep the center free for UI and the midnight ball.
+        // Ground-level coordinates in the same DefaultMenuEnvironment local space
+        // used by the proven Halloween and Thanksgiving floor decorations.
+        // Slightly enlarged and moved closer so the objects are visible in VR.
         root->transform->SetParent(environment->transform, false);
         root->transform->localPosition = Vector3(0, 0, 0);
         const Vector3 spots[] = {
-            Vector3(-7.55f, -0.65f, 13.25f),
-            Vector3(7.95f, -0.50f, 5.40f),
-            Vector3(3.25f, -0.65f, 14.60f)
+            Vector3(-4.6f, -0.65f, 7.5f),
+            Vector3(4.8f, -0.65f, 7.0f),
+            Vector3(0.8f, -0.65f, 10.5f)
         };
         const Color hats[] = {
             Color(0.20f, 0.70f, 1.0f, 1),
@@ -152,6 +153,7 @@ namespace NewYears::decor {
             auto group = GameObject::New_ctor("NewYearsPartyCluster");
             group->transform->SetParent(root->transform, false);
             group->transform->localPosition = spots[i];
+            group->transform->localScale = Vector3(2.0f, 2.0f, 2.0f);
             Bottle(group->transform, Vector3(-0.30f, 0, 0), 0.75f);
             TippedGlass(group->transform, Vector3(0.28f, 0.10f, 0.06f), 77.0f);
             PartyHat(group->transform, Vector3(0.55f, 0, -0.15f), hats[i], i == 1 ? -12.0f : 8.0f);
