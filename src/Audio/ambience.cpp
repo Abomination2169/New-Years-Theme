@@ -65,6 +65,8 @@ namespace {
     }
 }
 
+bool NewYearsMenuMusicHasStarted() { return playbackStarted; }
+
 void NewYearsMarkPreviewRequested() {
     previewRequested = true;
     if (menuClip && playbackStarted && !previewPlaying) {
