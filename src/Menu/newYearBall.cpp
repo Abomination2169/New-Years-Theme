@@ -37,8 +37,10 @@ namespace NewYears::ball {
         // not at a fixed camera coordinate. Tune after first Quest screenshot.
         root = GameObject::New_ctor("NewYearsMidnightBall");
         const Vector3 logoPosition = logo->transform->position;
-        root->transform->position = Vector3(logoPosition.x, logoPosition.y - 1.35f, logoPosition.z + 0.15f);
+        root->transform->position = Vector3(logoPosition.x, logoPosition.y - 2.35f, logoPosition.z + 0.15f);
         root->transform->rotation = Quaternion::get_identity();
+        // Scale the whole assembly together, including facets and top cap.
+        root->transform->localScale = Vector3(3.0f, 3.0f, 3.0f);
 
         auto shell = GameObject::CreatePrimitive(PrimitiveType::Sphere);
         shell->name = "MidnightBallShell";
