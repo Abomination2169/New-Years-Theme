@@ -25,7 +25,7 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicOnEnable, &SongPreviewPlayer::OnEnable,
                 void, SongPreviewPlayer* self) {
     NewYearsMenuMusicOnEnable(self);
     if (getModConfig().EnableCelebrationAmbience.GetValue())
-        PlayNewYearsCustomSong(self);
+        NewYearsRememberMenuPlayer(self);
 }
 
 MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
@@ -63,6 +63,8 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
                 void, MainMenuViewController* self,
                 bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
     NewYearsMenuActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
+    if (getModConfig().EnableCelebrationAmbience.GetValue())
+        NewYearsMainMenuActivated();
     if (!firstActivation) return;
     NewYears::ball::Create();
     if (getModConfig().EnableConfetti.GetValue())
