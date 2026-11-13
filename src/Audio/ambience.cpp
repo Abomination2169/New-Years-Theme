@@ -3,6 +3,8 @@
 #include "logging.hpp"
 #include "GlobalNamespace/MediaAsyncLoader.hpp"
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
+#include "UnityEngine/SceneManagement/SceneManager.hpp"
+#include "UnityEngine/SceneManagement/SceneManagement.hpp"
 #include "System/Threading/Tasks/Tasks.hpp"
 #include "custom-types/shared/delegate.hpp"
 
@@ -19,6 +21,7 @@ namespace {
     std::vector<std::string> tracks;
     size_t nextTrack = 0;
     bool scanned = false;
+    bool loading = false;
     // SongCore and legacy SongLoader roots used on Beat Saber 1.40.8.
     const char* roots[] = {
         "/sdcard/ModData/com.beatgames.beatsaber/Mods/SongCore/CustomLevels",
@@ -55,12 +58,23 @@ namespace {
 void PlayNewYearsCustomSong(GlobalNamespace::SongPreviewPlayer* player) {
     if (!player) return;
     ScanTracks();
-    if (tracks.empty()) return; // Keep Beat Saber's stock menu music.
+    if (tracks.empty() || loading) return; // Keep stock music if unavailable.
     const std::string path = tracks[nextTrack++ % tracks.size()];
+    loading = true;
+    INFO("New Years: loading custom menu track {}", path);
     auto task = GlobalNamespace::MediaAsyncLoader::New_ctor()->LoadAudioClipFromFilePathAsync(path);
     task->GetAwaiter().OnCompleted(custom_types::MakeDelegate<System::Action*>(
         std::function([player, task]() {
+            loading = false;
             auto clip = task->get_Result();
-            if (player && clip) player->_defaultAudioClip = clip;
+            if (!player || !clip) {
+                WARNING("New Years: custom menu clip load failed");
+                return;
+            }
+            if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore")
+                return;
+            player->_defaultAudioClip = clip;
+            INFO("New Years: custom menu clip ready; starting native crossfade");
+            player->CrossfadeTo(clip, 1.0f, 0.0f, 0.5f, true, nullptr);
         })));
 }
