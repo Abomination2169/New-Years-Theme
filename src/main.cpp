@@ -2,13 +2,9 @@
 #include "c.hpp"
 #include "logging.hpp"
 #include "Confetti/confetti.hpp"
-#include "Audio/ambience.hpp"
 
 #include "GlobalNamespace/LightWithIdManager.hpp"
 #include "GlobalNamespace/MainMenuViewController.hpp"
-#include "GlobalNamespace/SongPreviewPlayer.hpp"
-#include "UnityEngine/AudioClip.hpp"
-#include "UnityEngine/Resources.hpp"
 #include "UnityEngine/SceneManagement/SceneManager.hpp"
 #include "UnityEngine/SceneManagement/SceneManagement.hpp"
 #include "UnityEngine/Color.hpp"
@@ -20,23 +16,6 @@ using namespace UnityEngine;
 
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
 namespace NewYears::ball { void Create(); }
-
-// Identical music hooks to the working Halloween Theme.
-MAKE_HOOK_MATCH(NewYearsSongPreviewOnEnable, &SongPreviewPlayer::OnEnable,
-                void, SongPreviewPlayer* self) {
-    if (getModConfig().EnableCelebrationAmbience.GetValue()) PlayNewYearsMenuSong(self);
-    NewYearsSongPreviewOnEnable(self);
-}
-
-MAKE_HOOK_MATCH(NewYearsSongPreviewCrossfade,
-    static_cast<void(SongPreviewPlayer::*)(AudioClip*, float, float, float, bool, System::Action*)>(&SongPreviewPlayer::CrossfadeTo),
-    void, SongPreviewPlayer* self, AudioClip* clip, float volume, float startTime,
-    float duration, bool isDefault, System::Action* callback) {
-    if (getModConfig().EnableCelebrationAmbience.GetValue() &&
-        self->_defaultAudioClip && self->_defaultAudioClip.ptr() != clip)
-        PlayNewYearsMenuSong(self);
-    NewYearsSongPreviewCrossfade(self, clip, volume, startTime, duration, isDefault, callback);
-}
 
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
                 void, LightWithIdManager* self, int lightId, Color color) {
@@ -78,7 +57,5 @@ MOD_EXTERN_FUNC void late_load() noexcept {
     il2cpp_functions::Init();
     INSTALL_HOOK(PaperLogger, NewYearsEnvironmentColors);
     INSTALL_HOOK(PaperLogger, NewYearsMenuActivate);
-    INSTALL_HOOK(PaperLogger, NewYearsSongPreviewOnEnable);
-    INSTALL_HOOK(PaperLogger, NewYearsSongPreviewCrossfade);
     INFO("New Year's Theme hooks installed");
 }
