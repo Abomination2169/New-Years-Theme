@@ -67,7 +67,7 @@ namespace NewYears::decor {
             for (int j = 0; j < segments; ++j) {
                 int a = i * (segments + 1) + j;
                 int b = a + segments + 1;
-                indices.insert(indices.end(), {a, b, a + 1, a + 1, b, b + 1});
+                indices.insert(indices.end(), {a, b, a + 1, a + 1, b, b + 1, a + 1, b, a, b + 1, b, a + 1});
             }
         }
         auto mesh = Mesh::New_ctor();
@@ -80,7 +80,7 @@ namespace NewYears::decor {
         auto filter = go->AddComponent<MeshFilter*>();
         filter->set_sharedMesh(mesh);
         auto renderer = go->AddComponent<MeshRenderer*>();
-        auto shader = Shader::Find(transparent ? "Legacy Shaders/Transparent/Diffuse" : "Standard");
+        auto shader = Shader::Find("Sprites/Default");
         if (!shader) shader = Shader::Find("Sprites/Default");
         if (shader) {
             auto material = Material::New_ctor(shader);
@@ -95,8 +95,8 @@ namespace NewYears::decor {
         glass->transform->SetParent(parent, false);
         glass->transform->localPosition = at;
         glass->transform->localRotation = Quaternion::Euler(Vector3(0, 0, angle));
-        const Color clear(0.78f,0.91f,0.98f,0.32f);
-        const Color edge(0.86f,0.94f,1.0f,0.65f);
+        const Color clear(0.78f,0.91f,0.98f,0.82f);
+        const Color edge(0.86f,0.94f,1.0f,0.98f);
         Lathe(glass->transform, "HollowCurvedBowl", {
             {0.005f,0.035f},{0.03f,0.09f},{0.08f,0.15f},
             {0.15f,0.20f},{0.23f,0.235f},{0.31f,0.24f},
@@ -131,14 +131,14 @@ namespace NewYears::decor {
         // The third position is centered ahead of the player, away from the UI.
         // Ground baseline follows the previously visible menu decoration locations.
         constexpr float groundY = -0.65f;
-        constexpr float glassScale = 0.55f;
+        constexpr float glassScale = 1.05f;
         // A sideways goblet's widest bowl radius is 0.24 local units.
         // Center above the ground by the scaled radius plus a small clearance.
         constexpr float centerY = groundY + 0.24f * glassScale + 0.025f;
         const Vector3 positions[] = {
-            Vector3(-3.8f, centerY, 7.0f),
-            Vector3(3.8f, centerY, 7.0f),
-            Vector3(0.0f, centerY, 5.0f)
+            Vector3(-4.6f, centerY, 7.5f),
+            Vector3(4.8f, centerY, 7.0f),
+            Vector3(0.0f, centerY, 7.8f)
         };
         const float rotations[] = {78.0f, 92.0f, 85.0f};
         for (int i = 0; i < 3; ++i) {
