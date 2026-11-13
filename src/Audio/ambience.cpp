@@ -44,7 +44,7 @@ namespace {
                     if (!songIt->is_regular_file(innerEc)) continue;
                     auto ext = songIt->path().extension().string();
                     for (char& ch : ext) ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
-                    if (ext == ".ogg") tracks.emplace_back(songIt->path().string());
+                    if (ext == ".ogg" || ext == ".egg") tracks.emplace_back(songIt->path().string());
                 }
                 it.disable_recursion_pending();
             }
