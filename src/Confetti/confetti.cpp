@@ -53,7 +53,13 @@ namespace NewYears::confetti {
         }
 
         ParticleController::MainModule::set_startLifetime(particles, 16.0f);
-        ParticleController::MainModule::set_startSize(particles, 0.22f);
+        ParticleController::MainModule::set_startSize(particles, ParticleController::MinMaxCurve(0.10f, 0.30f));
+        // Randomize the facing angle for each fleck; gently tumble as they fall.
+        ParticleController::MainModule::set_startRotation(particles,
+            ParticleController::MinMaxCurve(0.0f, 6.2831853f));
+        ParticleController::RotationOverLifetimeModule::set_enabled(particles, true);
+        ParticleController::RotationOverLifetimeModule::set_z(particles,
+            ParticleController::MinMaxCurve(-0.55f, 0.55f));
         ParticleController::MainModule::set_maxParticles(particles, 100);
         ParticleController::MainModule::set_gravityModifier(particles, 0.008f);
 
@@ -65,7 +71,7 @@ namespace NewYears::confetti {
         ParticleController::ColorOverLifetimeModule::set_enabled(particles, false);
         ParticleController::ColorBySpeedModule::set_enabled(particles, false);
         ParticleController::EmissionModule::set_enabled(particles, true);
-        ParticleController::EmissionModule::set_rateOverTime(particles, 3.0f);
+        ParticleController::EmissionModule::set_rateOverTime(particles, 4.0f);
         ParticleController::ShapeModule::set_shapeType(particles, ParticleController::ShapeType::Box);
         ParticleController::ShapeModule::set_position(particles, Vector3(0, 0, 0));
         ParticleController::ShapeModule::set_rotation(particles, Vector3(0, 0, 0));
