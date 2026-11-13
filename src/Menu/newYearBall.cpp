@@ -26,15 +26,15 @@ namespace NewYears::ball {
             return;
         }
 
-        // Double billboard dimensions while retaining the original top-edge alignment with SABER.
+        // Increase billboard dimensions by 33% over the original 4.3 units while retaining the top-edge alignment with SABER.
         // One transparent, textured quad replaces the 100+ primitive spheres.
         auto quad = GameObject::CreatePrimitive(PrimitiveType::Quad);
         if (!quad) return;
         quad->name = "NewYearsMidnightBall";
         const Vector3 p = logo->transform->position;
-        quad->transform->position = Vector3(p.x - 0.30f, p.y - 5.80f, p.z + 0.15f);
+        quad->transform->position = Vector3(p.x - 0.30f, p.y - 4.3595f, p.z + 0.15f);
         quad->transform->rotation = Quaternion::get_identity();
-        quad->transform->localScale = Vector3(8.6f, 8.6f, 1.0f);
+        quad->transform->localScale = Vector3(5.719f, 5.719f, 1.0f);
 
         auto renderer = quad->GetComponent<MeshRenderer*>();
         auto shader = Shader::Find("Sprites/Default");
