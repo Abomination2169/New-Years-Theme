@@ -71,7 +71,7 @@ namespace NewYears::confetti {
         ParticleController::ColorOverLifetimeModule::set_enabled(particles, false);
         ParticleController::ColorBySpeedModule::set_enabled(particles, false);
         ParticleController::EmissionModule::set_enabled(particles, true);
-        ParticleController::EmissionModule::set_rateOverTime(particles, 4.8f);
+        ParticleController::EmissionModule::set_rateOverTime(particles, 5.5f);
         ParticleController::ShapeModule::set_shapeType(particles, ParticleController::ShapeType::Box);
         ParticleController::ShapeModule::set_position(particles, Vector3(0, 0, 0));
         ParticleController::ShapeModule::set_rotation(particles, Vector3(0, 0, 0));
@@ -96,13 +96,13 @@ namespace NewYears::confetti {
         material->SetTexture(StringW("_MainTex"), texture);
         material->SetColor(StringW("_Color"), Color(1, 1, 1, 1));
 
-        constexpr int frames = 12;
+        constexpr int frames = 16;
         ParticleController::TextureSheetAnimationModule::set_enabled(particles, true);
         ParticleController::TextureSheetAnimationModule::set_mode(particles, ParticleController::AnimationMode::Grid);
         ParticleController::TextureSheetAnimationModule::set_numTilesX(particles, frames);
         ParticleController::TextureSheetAnimationModule::set_numTilesY(particles, 1);
         ParticleController::TextureSheetAnimationModule::set_frameOverTime(
-            particles, ParticleController::MinMaxCurve(0.0f, frames));
+            particles, ParticleController::MinMaxCurve(0.0f, 0.0f));
         ParticleController::TextureSheetAnimationModule::set_startFrame(
             particles, ParticleController::MinMaxCurve(0.0f, frames));
         ParticleController::TextureSheetAnimationModule::set_cycleCount(particles, 0);
