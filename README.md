@@ -2,6 +2,7 @@
 
 Happy New Years!
 
+
 Transform your Beat Saber menu with golden harvest lighting, seasonal decorations, and gently falling leaves!
 
 Based on the fantastic Christmas Mod by Vcmikuu and CatsaCode.
