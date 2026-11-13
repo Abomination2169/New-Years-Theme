@@ -40,6 +40,7 @@ namespace NewYears::ambience {
     static std::mutex completionMutex;
     static std::queue<std::function<void()>> completions;
     static bool active = false;
+    static bool previewing = false;
     static bool selected = false;
     static bool fallbackAttempted = false;
 
@@ -139,7 +140,7 @@ namespace NewYears::ambience {
             active = false;
             return;
         }
-        if (active && musicSource && musicClip && !musicSource->get_isPlaying()) {
+        if (active && !previewing && musicSource && musicClip && !musicSource->get_isPlaying()) {
             musicSource->set_clip(musicClip.ptr());
             musicSource->Play();
         }
@@ -179,6 +180,18 @@ namespace NewYears::ambience {
             }
         }
 
+    }
+
+    void SetPreviewing(bool isPreviewing) {
+        if (previewing == isPreviewing) return;
+        previewing = isPreviewing;
+        if (previewing && musicSource && musicSource->get_isPlaying()) {
+            musicSource->Pause();
+            INFO("New Year's: custom menu soundtrack paused for song preview");
+        } else if (!previewing && active && musicSource && musicClip) {
+            musicSource->UnPause();
+            INFO("New Year's: custom menu soundtrack resumed after preview");
+        }
     }
 
     void Stop() {
