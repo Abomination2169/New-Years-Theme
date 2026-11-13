@@ -14,13 +14,10 @@ assert (root / manifest["coverImage"]).is_file()
 assert (root / "assets/confetti_streamers.png").is_file()
 assert (root / "src/Confetti/confetti.cpp").is_file()
 main_source = (root / "src/main.cpp").read_text()
-audio_source = (root / "src/Audio/ambience.cpp").read_text()
-assert "NewYearsSongPreviewOnEnable" in main_source
-assert "NewYearsSongPreviewCrossfade" in main_source
-assert "PlayNewYearsMenuSong" in audio_source
-assert "_defaultAudioClip = clip" in audio_source
+assert "SongPreviewPlayer" not in main_source
+assert "PlayNewYearsMenuSong" not in main_source
 assert "NewYearsDefaultMenuMusic" not in main_source
-assert "DontDestroyOnLoad" not in audio_source
+assert manifest["fileCopies"] == []
 for e in manifest["fileCopies"]:
     assert (root / "FileCopies" / e["name"]).is_file(), e
-print("PASS: New Year's 1.40.8 metadata and assets; Halloween-style native menu music replacement")
+print("PASS: New Year's 1.40.8 metadata and assets; stock Beat Saber menu music preserved")
