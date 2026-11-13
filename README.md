@@ -2,9 +2,6 @@
 
 Happy New Years!
 
-
-Transform your Beat Saber menu with golden harvest lighting, seasonal decorations, and gently falling leaves!
-
 Based on the fantastic Christmas Mod by Vcmikuu and CatsaCode.
 
 Note: Development assisted with use of A.I. Please support talented artists and coders whenever possible.
@@ -21,6 +18,7 @@ The combined mod's code is distributed under the GNU General Public License, ver
 Source and binaries: The GitHub repository contains the mod's source and build configuration; the releases page provides downloadable QMODs and source archives. For each binary release, use the matching version/tag of the source, not necessarily the latest main branch. The source supplied for a QMOD must correspond to that build; release assets and source archives require review to confirm this.
 
 Attribution and modifications
+
 Vcmikuu and CatsaCode: Creators of the original Christmas Theme, on whose source this mod is based. Thank you both for the inspiration and your permission.
 Abomination2169: Seasonal adaptation, code and asset changes, maintenance and distribution of Thanksgiving Theme.
 Quest Mod Template: By Lauriethefish, danrouse and Bobby Shmurner, originally provided under the Unlicense. Credit also goes to the dependency/library authors acknowledged in Christmas Theme's README.
