@@ -7,6 +7,7 @@
 #include "GlobalNamespace/LightWithIdManager.hpp"
 #include "GlobalNamespace/MainMenuViewController.hpp"
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
+#include "UnityEngine/AudioClip.hpp"
 #include "UnityEngine/Resources.hpp"
 #include "UnityEngine/SceneManagement/SceneManager.hpp"
 #include "UnityEngine/SceneManagement/SceneManagement.hpp"
@@ -20,11 +21,25 @@ using namespace UnityEngine;
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
 namespace NewYears::ball { void Create(); }
 
-// Keep the stock menu preview from crossfading back over the custom soundtrack.
+// Let Beat Saber play selected map previews without competing menu audio.
+MAKE_HOOK_MATCH(NewYearsSongPreview, 
+                static_cast<void(SongPreviewPlayer::*)(AudioClip*, float, float, float, bool, System::Action*)>(&SongPreviewPlayer::CrossfadeTo),
+                void, SongPreviewPlayer* self, AudioClip* clip, float volume,
+                float startTime, float duration, bool isDefault,
+                System::Action* onFadeOutCallback) {
+    if (getModConfig().EnableCelebrationAmbience.GetValue() &&
+        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name != "GameCore") {
+        NewYears::ambience::SetPreviewing(!isDefault && clip != nullptr);
+    }
+    NewYearsSongPreview(self, clip, volume, startTime, duration, isDefault, onFadeOutCallback);
+}
+
+// Suppress only the game's default menu music; resume our soundtrack instead.
 MAKE_HOOK_MATCH(NewYearsDefaultMenuMusic, &SongPreviewPlayer::CrossfadeToDefault,
                 void, SongPreviewPlayer* self) {
     if (getModConfig().EnableCelebrationAmbience.GetValue() &&
         UnityEngine::SceneManagement::SceneManager::GetActiveScene().name != "GameCore") {
+        NewYears::ambience::SetPreviewing(false);
         return;
     }
     NewYearsDefaultMenuMusic(self);
@@ -77,5 +92,6 @@ MOD_EXTERN_FUNC void late_load() noexcept {
     INSTALL_HOOK(PaperLogger, NewYearsEnvironmentColors);
     INSTALL_HOOK(PaperLogger, NewYearsMenuActivate);
     INSTALL_HOOK(PaperLogger, NewYearsDefaultMenuMusic);
+    INSTALL_HOOK(PaperLogger, NewYearsSongPreview);
     INFO("New Year's Theme hooks installed");
 }
