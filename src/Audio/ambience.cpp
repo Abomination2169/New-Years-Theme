@@ -32,6 +32,8 @@ namespace {
     float menuStartRealtime = 0.0f;
     float savedMenuPosition = 0.0f;
     bool previewPlaying = false;
+    SafePtrUnity<GlobalNamespace::SongPreviewPlayer> pendingMenuPlayer;
+    bool mainMenuActivated = false;
     // SongCore and legacy SongLoader roots used on Beat Saber 1.40.8.
     const char* roots[] = {
         "/sdcard/ModData/com.beatgames.beatsaber/Mods/SongCore/CustomLevels",
@@ -65,6 +67,16 @@ namespace {
     }
 }
 
+void NewYearsRememberMenuPlayer(GlobalNamespace::SongPreviewPlayer* player) {
+    pendingMenuPlayer = player;
+}
+
+void NewYearsMainMenuActivated() {
+    mainMenuActivated = true;
+    if (pendingMenuPlayer && !playbackStarted && !loading)
+        PlayNewYearsCustomSong(pendingMenuPlayer.ptr());
+}
+
 bool NewYearsMenuMusicHasStarted() { return playbackStarted; }
 
 void NewYearsMarkPreviewRequested() {
@@ -92,7 +104,7 @@ float NewYearsGetMenuResumeTime(UnityEngine::AudioClip* clip, bool isDefault, fl
 void PlayNewYearsCustomSong(GlobalNamespace::SongPreviewPlayer* player) {
     if (!player) return;
     ScanTracks();
-    if (tracks.empty() || loading || playbackStarted) return; // Keep stock music if unavailable.
+    if (!mainMenuActivated || tracks.empty() || loading || playbackStarted) return; // Wait for the initialized menu.
     const std::string path = tracks[nextTrack++ % tracks.size()];
     loading = true;
     previewRequested = false;
