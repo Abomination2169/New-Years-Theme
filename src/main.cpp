@@ -9,6 +9,7 @@
 #include "UnityEngine/SceneManagement/SceneManager.hpp"
 #include "UnityEngine/SceneManagement/SceneManagement.hpp"
 #include "UnityEngine/Color.hpp"
+#include "UnityEngine/RenderSettings.hpp"
 #include "custom-types/shared/macros.hpp"
 #include "scotland2/shared/modloader.h"
 
@@ -43,8 +44,13 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
                 bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
     NewYearsMenuActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
     if (!firstActivation) return;
-    if (getModConfig().EnableMidnightLighting.GetValue())
+    if (getModConfig().EnableMidnightLighting.GetValue()) {
         NewYears::logoColors::ApplyLogoColors();
+        // Soft blue ambient fill lifts dark floor geometry without washing out
+        // the midnight-blue environment lighting or gold/silver neon accents.
+        UnityEngine::RenderSettings::set_ambientLight(Color(0.20f, 0.29f, 0.50f, 1.0f));
+        UnityEngine::RenderSettings::set_ambientIntensity(1.25f);
+    }
     if (getModConfig().EnableConfetti.GetValue())
         NewYears::confetti::CreateConfetti();
     if (getModConfig().EnableCelebrationAmbience.GetValue())
