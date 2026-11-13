@@ -16,7 +16,6 @@ using namespace GlobalNamespace;
 using namespace UnityEngine;
 
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
-namespace NewYears::logoColors { void ApplyLogoColors(); }
 namespace NewYears::ball { void Create(); }
 
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
@@ -44,8 +43,6 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
                 bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
     NewYearsMenuActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
     if (!firstActivation) return;
-    if (getModConfig().EnableMidnightLighting.GetValue())
-        NewYears::logoColors::ApplyLogoColors();
     NewYears::ball::Create();
     if (getModConfig().EnableConfetti.GetValue())
         NewYears::confetti::CreateConfetti();
