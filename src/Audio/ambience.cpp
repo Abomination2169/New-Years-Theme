@@ -2,6 +2,8 @@
 #include "main.hpp"
 #include "logging.hpp"
 #include "GlobalNamespace/MediaAsyncLoader.hpp"
+#include "GlobalNamespace/SongPreviewPlayer.hpp"
+#include "UnityEngine/Resources.hpp"
 #include "UnityEngine/AudioSource.hpp"
 #include "UnityEngine/AudioClip.hpp"
 #include "UnityEngine/GameObject.hpp"
@@ -35,6 +37,7 @@ namespace NewYears::ambience {
     static std::queue<std::function<void()>> completions;
     static bool active = false;
     static bool previewActive = false;
+    static bool fadeDefaultPending = false;
 
     void Tick() {
         std::queue<std::function<void()>> ready;
@@ -50,6 +53,13 @@ namespace NewYears::ambience {
             active = false;
             return;
         }
+        if (active && !previewActive && fadeDefaultPending) {
+            fadeDefaultPending = false;
+            for (auto preview : Resources::FindObjectsOfTypeAll<GlobalNamespace::SongPreviewPlayer*>()) {
+                if (preview) preview->FadeOut(0.5f);
+            }
+            INFO("New Years: faded stock music after preview");
+        }
         if (active && !previewActive && musicSource && musicClip && !musicSource->get_isPlaying()) {
             musicSource->set_clip(musicClip.ptr());
             musicSource->Play();
@@ -57,6 +67,8 @@ namespace NewYears::ambience {
     }
 
     void Start() {
+        previewActive = false;
+        fadeDefaultPending = true;
         if (!ambientGo) {
             ambientGo = GameObject::New_ctor("NewYearsCelebrationAmbience");
             if (!ambientGo) return;
@@ -103,14 +115,16 @@ namespace NewYears::ambience {
         if (!active || !musicSource) return;
         if (value) {
             if (musicSource->get_isPlaying()) musicSource->Pause();
-        } else if (musicClip) {
-            musicSource->UnPause();
+        } else {
+            fadeDefaultPending = true;
+            if (musicClip) musicSource->UnPause();
         }
     }
 
     void Stop() {
         active = false;
         previewActive = false;
+        fadeDefaultPending = false;
         if (musicSource && musicSource->get_isPlaying()) musicSource->Stop();
     }
 }
