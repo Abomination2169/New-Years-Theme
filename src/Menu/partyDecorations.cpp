@@ -111,7 +111,16 @@ namespace NewYears::decor {
     }
 
     void Create() {
-        if (root) return;
+        if (root) {
+            auto* existing = root.ptr();
+            if (existing && existing->get_activeInHierarchy()) {
+                INFO("New Year's: existing wine-glass root is active");
+                return;
+            }
+            WARNING("New Year's: stale or inactive wine-glass root; rebuilding");
+            if (existing) GameObject::Destroy(existing);
+            root = nullptr;
+        }
         auto environment = GameObject::Find("DefaultMenuEnvironment");
         if (!environment) {
             WARNING("New Year's: wine glasses waiting for DefaultMenuEnvironment");
@@ -119,6 +128,7 @@ namespace NewYears::decor {
         }
         root = GameObject::New_ctor("NewYearsGroundWineGlasses");
         if (!root) return;
+        INFO("New Year's: menu environment active=%d", environment->get_activeInHierarchy());
         root->transform->SetParent(environment->transform, false);
         root->transform->localPosition = Vector3(0, 0, 0);
 
@@ -142,8 +152,11 @@ namespace NewYears::decor {
             group->transform->localPosition = positions[i];
             group->transform->localScale = Vector3(glassScale, glassScale, glassScale);
             TippedGlass(group->transform, Vector3(0, 0, 0), rotations[i]);
+            const auto world = group->transform->get_position();
+            INFO("New Year's: wine glass %d world=(%.2f, %.2f, %.2f) active=%d",
+                 i, world.x, world.y, world.z, group->get_activeInHierarchy());
         }
-        INFO("New Year's: three diagnostic opaque wine goblets created at known-visible locations");
+        INFO("New Year's: three diagnostic wine goblets created; root active=%d", root->get_activeInHierarchy());
     }
 
     void Destroy() {
