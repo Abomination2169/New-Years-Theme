@@ -12,6 +12,7 @@
 #include "UnityEngine/SceneManagement/SceneManager.hpp"
 #include "custom-types/shared/macros.hpp"
 #include "logging.hpp"
+#include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
 
 using namespace UnityEngine;
 
@@ -90,12 +91,12 @@ namespace NewYears::decor {
         lamp->transform->localRotation = Quaternion::Euler(Vector3(90, 0, 0));
         auto light = lamp->AddComponent<Light*>();
         if (light) {
-            light->set_type(LightType::Spot);
+            il2cpp_utils::RunMethod(light, "set_type", LightType::Spot);
             light->set_color(Color(1.0f, 0.80f, 0.47f, 1.0f));
             light->set_intensity(0.0f);
-            light->set_range(5.5f);
-            light->set_spotAngle(75.0f);
-            light->set_shadows(LightShadows::None);
+            il2cpp_utils::RunMethod(light, "set_range", 5.5f);
+            il2cpp_utils::RunMethod(light, "set_spotAngle", 75.0f);
+            il2cpp_utils::RunMethod(light, "set_shadows", LightShadows::None);
             activeLight = light;
         }
         sequenceStart = -1.0f;
