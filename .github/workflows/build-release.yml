@@ -187,3 +187,46 @@ jobs:
           files: |
             dist/New-Years-Theme.qmod
             dist/New-Years-Theme-GitHub-Source.zip
+
+  refresh-v1-release:
+    name: Refresh existing v1.0.0 release from tested main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Refresh tested New Years v1.0.0 release assets'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Check out exact validated source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download validated QMOD
+        uses: actions/download-artifact@v4
+        with:
+          name: New-Years-QMOD
+          path: dist
+      - name: Verify release and generate matching source archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test -s dist/New-Years-Theme.qmod
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          gh release view v1.0.0 --repo "$GITHUB_REPOSITORY" >/dev/null
+          python3 - <<'PY'
+          import json, zipfile
+          with zipfile.ZipFile("dist/New-Years-Theme.qmod") as z:
+              m = json.loads(z.read("mod.json"))
+              assert (m["id"], m["version"], m["coverImage"]) == ("newyears", "1.0.0", "NewYears-README.png")
+          PY
+          git archive --format=zip --prefix=New-Years-Theme/ HEAD -o dist/New-Years-Theme-GitHub-Source.zip
+          unzip -tq dist/New-Years-Theme-GitHub-Source.zip
+      - name: Update existing release files and tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release upload v1.0.0 dist/New-Years-Theme.qmod dist/New-Years-Theme-GitHub-Source.zip --clobber --repo "$GITHUB_REPOSITORY"
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v1.0.0" -f sha="$GITHUB_SHA" -F force=true
+          gh release view v1.0.0 --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[] | {name,size}'
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v1.0.0" --jq '.object.sha')" = "$GITHUB_SHA"
