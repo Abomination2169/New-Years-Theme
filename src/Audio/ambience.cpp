@@ -28,6 +28,11 @@ namespace NewYears::ambience {
     static SafePtrUnity<GameObject> ambientGo;
     static SafePtrUnity<AudioSource> ambientSource;
     static SafePtrUnity<AudioClip> ambientClip;
+    static SafePtrUnity<AudioSource> musicSource;
+    static SafePtrUnity<AudioClip> musicClip;
+    static bool musicLoading = false;
+    static const std::string musicPath =
+        "/sdcard/ModData/com.beatgames.beatsaber/Mods/NewYears/Midnight_Synthwave_Tokyo.ogg";
     static std::mutex completionMutex;
     static std::queue<std::function<void()>> completions;
     static bool active = false;
@@ -46,8 +51,13 @@ namespace NewYears::ambience {
         const auto scene = SceneManagement::SceneManager::GetActiveScene();
         if (const_cast<SceneManagement::Scene&>(scene).get_name() == "GameCore") {
             if (ambientSource->get_isPlaying()) ambientSource->Stop();
+            if (musicSource && musicSource->get_isPlaying()) musicSource->Stop();
             active = false;
             return;
+        }
+        if (active && musicSource && musicClip && !musicSource->get_isPlaying()) {
+            musicSource->set_clip(musicClip.ptr());
+            musicSource->Play();
         }
         if (active && ambientClip && !ambientSource->get_isPlaying()) {
             ambientSource->set_clip(ambientClip.ptr());
@@ -65,6 +75,7 @@ namespace NewYears::ambience {
             if (!ambientGo) return;
             Object::DontDestroyOnLoad(ambientGo.ptr());
             ambientSource = ambientGo->AddComponent<AudioSource*>();
+            musicSource = ambientGo->AddComponent<AudioSource*>();
             ambientGo->AddComponent<NewYears::AmbienceMenuTicker*>();
             if (!ambientSource) {
                 GameObject::Destroy(ambientGo.ptr());
@@ -74,9 +85,33 @@ namespace NewYears::ambience {
             ambientSource->set_playOnAwake(false);
             ambientSource->set_spatialBlend(0.0f);
             ambientSource->set_loop(true);
-            ambientSource->set_volume(0.055f);
+            ambientSource->set_volume(0.025f);
+            if (musicSource) {
+                musicSource->set_playOnAwake(false);
+                musicSource->set_spatialBlend(0.0f);
+                musicSource->set_loop(true);
+                musicSource->set_volume(0.25f);
+            }
         }
         active = true;
+        if (musicSource && !musicClip && !musicLoading && fileexists(musicPath)) {
+            musicLoading = true;
+            auto musicTask = GlobalNamespace::MediaAsyncLoader::New_ctor()
+                ->LoadAudioClipFromFilePathAsync(musicPath);
+            if (musicTask) {
+                musicTask->GetAwaiter().OnCompleted(
+                    custom_types::MakeDelegate<System::Action*>(std::function([musicTask]() {
+                        std::lock_guard<std::mutex> lock(completionMutex);
+                        completions.emplace([musicTask]() {
+                            musicClip = musicTask->get_Result();
+                            musicLoading = false;
+                            if (!musicClip) WARNING("New Year's: synthwave music failed to load");
+                            else INFO("New Year's: synthwave music loaded");
+                        });
+                    }))
+                );
+            } else musicLoading = false;
+        }
         if (ambientClip || loading) return;
         loading = true;
         auto task = GlobalNamespace::MediaAsyncLoader::New_ctor()
@@ -99,6 +134,7 @@ namespace NewYears::ambience {
     void Stop() {
         active = false;
         if (ambientSource && ambientSource->get_isPlaying()) ambientSource->Stop();
+        if (musicSource && musicSource->get_isPlaying()) musicSource->Stop();
     }
 }
 
