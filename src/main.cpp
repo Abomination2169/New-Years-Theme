@@ -21,24 +21,27 @@ using namespace UnityEngine;
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
 namespace NewYears::ball { void Create(); }
 
-// Observe previews without altering Beat Saber's original crossfade calls.
-MAKE_HOOK_MATCH(NewYearsPreviewObserve,
+// Use Beat Saber's own preview player and original crossfade lifecycle.
+MAKE_HOOK_MATCH(NewYearsPreviewReplace,
     static_cast<void(SongPreviewPlayer::*)(AudioClip*, float, float, float, bool, System::Action*)>(&SongPreviewPlayer::CrossfadeTo),
     void, SongPreviewPlayer* self, AudioClip* clip, float volume, float startTime,
     float duration, bool isDefault, System::Action* callback) {
-    if (getModConfig().EnableCelebrationAmbience.GetValue() &&
+    if (isDefault && getModConfig().EnableCelebrationAmbience.GetValue() &&
         SceneManagement::SceneManager::GetActiveScene().name != "GameCore") {
-        NewYears::ambience::SetPreviewActive(!isDefault && clip != nullptr);
+        if (auto replacement = NewYears::ambience::GetReplacementClip()) {
+            clip = replacement;
+        }
     }
-    NewYearsPreviewObserve(self, clip, volume, startTime, duration, isDefault, callback);
+    NewYearsPreviewReplace(self, clip, volume, startTime, duration, isDefault, callback);
 }
 
-// Keep the stock menu preview from crossfading back over the custom soundtrack.
 MAKE_HOOK_MATCH(NewYearsDefaultMenuMusic, &SongPreviewPlayer::CrossfadeToDefault,
                 void, SongPreviewPlayer* self) {
     if (getModConfig().EnableCelebrationAmbience.GetValue() &&
-        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name != "GameCore") {
-        return;
+        SceneManagement::SceneManager::GetActiveScene().name != "GameCore") {
+        if (auto replacement = NewYears::ambience::GetReplacementClip()) {
+            self->_defaultAudioClip = replacement;
+        }
     }
     NewYearsDefaultMenuMusic(self);
 }
@@ -69,9 +72,7 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
     NewYearsMenuActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
     if (getModConfig().EnableCelebrationAmbience.GetValue()) {
         NewYears::ambience::Start();
-        for (auto preview : Resources::FindObjectsOfTypeAll<SongPreviewPlayer*>()) {
-            if (preview) preview->FadeOut(1.0f);
-        }
+
     }
     if (!firstActivation) return;
     NewYears::ball::Create();
@@ -90,6 +91,6 @@ MOD_EXTERN_FUNC void late_load() noexcept {
     INSTALL_HOOK(PaperLogger, NewYearsEnvironmentColors);
     INSTALL_HOOK(PaperLogger, NewYearsMenuActivate);
     INSTALL_HOOK(PaperLogger, NewYearsDefaultMenuMusic);
-    INSTALL_HOOK(PaperLogger, NewYearsPreviewObserve);
+    INSTALL_HOOK(PaperLogger, NewYearsPreviewReplace);
     INFO("New Year's Theme hooks installed");
 }
