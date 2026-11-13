@@ -20,7 +20,8 @@ namespace NewYears::decor {
         if (!renderer) return;
         auto material = renderer->get_material();
         if (!material) return;
-        auto shader = Shader::Find("Sprites/Default");
+        auto shader = Shader::Find("Standard");
+        if (!shader) shader = Shader::Find("Sprites/Default");
         if (shader) material->set_shader(shader);
         material->set_color(color);
     }
@@ -39,13 +40,13 @@ namespace NewYears::decor {
         return go;
     }
 
-    static void TippedGlass(Transform* parent, Vector3 at, float angle) {
-        auto glass = GameObject::New_ctor("KnockedOverWineGlass");
+    static void WineGlass(Transform* parent, Vector3 at, float angle) {
+        auto glass = GameObject::New_ctor("PrimitiveWineGlass");
         glass->transform->SetParent(parent, false);
         glass->transform->localPosition = at;
         glass->transform->localRotation = Quaternion::Euler(Vector3(0, 0, angle));
-        const Color clear(0.72f, 0.87f, 0.94f, 0.46f);
-        const Color rim(0.89f, 0.95f, 1.0f, 0.78f);
+        const Color clear(0.70f, 0.86f, 0.98f, 1.0f);
+        const Color rim(0.95f, 0.98f, 1.0f, 1.0f);
         // Wide, rounded goblet bowl rather than the old cylindrical flute.
         Part(glass->transform, "RoundedWineBowl", PrimitiveType::Sphere,
              Vector3(0, 0.18f, 0), Vector3(0.29f, 0.29f, 0.29f), clear);
@@ -90,15 +91,18 @@ namespace NewYears::decor {
             Vector3(3.95f, -0.65f, -15.10f)
         };
         for (int i = 0; i < 8; ++i) {
-            auto group = GameObject::New_ctor("SmallFallenWineGlass");
+            auto group = GameObject::New_ctor(i % 2 == 0 ? "UprightWineGlass" : "FallenWineGlass");
             group->transform->SetParent(root->transform, false);
             group->transform->localPosition = spots[i];
-            group->transform->localScale = Vector3(0.45f, 0.45f, 0.45f);
-            // Local center is raised 0.20: the sideways goblet bowl
-            // radius is ~0.145, keeping its underside above the floor.
-            TippedGlass(group->transform, Vector3(0, 0.20f, 0), i % 2 ? -77.0f : 77.0f);
+            group->transform->localScale = Vector3(0.80f, 0.80f, 0.80f);
+            // Half upright, half on their sides. The original glass foot
+            // extends 0.254 units below its origin; keep that above ground.
+            const bool upright = (i % 2 == 0);
+            WineGlass(group->transform,
+                      Vector3(0, upright ? 0.28f : 0.24f, 0),
+                      upright ? 0.0f : (i % 4 == 1 ? 77.0f : -77.0f));
         }
-        INFO("New Year's: eight tiny tipped wine glasses placed at original Christmas ground sites");
+        INFO("New Year's: eight opaque primitive wine glasses created (four upright, four fallen)");
     }
 
     void Destroy() {
