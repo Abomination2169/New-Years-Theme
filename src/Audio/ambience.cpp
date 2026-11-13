@@ -30,6 +30,7 @@ namespace NewYears::ambience {
     static std::mutex completionMutex;
     static std::queue<std::function<void()>> completions;
     static bool loading = false;
+    static bool pendingInitialPlayback = false;
     static const std::string musicPath =
         "/sdcard/ModData/com.beatgames.beatsaber/Mods/NewYears/Midnight_Synthwave_Tokyo.ogg";
 
@@ -45,6 +46,17 @@ namespace NewYears::ambience {
             std::swap(ready, completions);
         }
         while (!ready.empty()) { ready.front()(); ready.pop(); }
+        if (pendingInitialPlayback && replacementClip &&
+            SceneManagement::SceneManager::GetActiveScene().name != "GameCore") {
+            for (auto player : Resources::FindObjectsOfTypeAll<GlobalNamespace::SongPreviewPlayer*>()) {
+                if (!player) continue;
+                player->_defaultAudioClip = replacementClip.ptr();
+                player->CrossfadeToDefault();
+                pendingInitialPlayback = false;
+                INFO("New Years: activated replacement via native preview player");
+                break;
+            }
+        }
     }
 
     void Start() {
@@ -69,7 +81,10 @@ namespace NewYears::ambience {
                 completions.emplace([task]() {
                     replacementClip = task->get_Result();
                     loading = false;
-                    if (replacementClip) INFO("New Years: menu replacement clip loaded");
+                    if (replacementClip) {
+                        pendingInitialPlayback = true;
+                        INFO("New Years: menu replacement clip loaded");
+                    }
                     else WARNING("New Years: failed to load replacement clip");
                 });
             }))
