@@ -2,6 +2,8 @@
 #include "main.hpp"
 #include "logging.hpp"
 #include "GlobalNamespace/MediaAsyncLoader.hpp"
+#include "GlobalNamespace/SongPreviewPlayer.hpp"
+#include "UnityEngine/Resources.hpp"
 #include "UnityEngine/AudioSource.hpp"
 #include "UnityEngine/AudioClip.hpp"
 #include "UnityEngine/GameObject.hpp"
@@ -44,6 +46,7 @@ namespace NewYears::ambience {
     static bool fallbackAttempted = false;
     static unsigned int generation = 0;
     static bool menuSession = false;
+    static bool defaultMusicSuppressed = false;
 
     // SongCore 1.40.8 plus legacy SongLoader installations.
     static std::vector<std::string> FindCustomTracks() {
@@ -143,6 +146,13 @@ namespace NewYears::ambience {
             Stop();
             return;
         }
+        if (active && musicSource && musicClip && !defaultMusicSuppressed) {
+            for (auto preview : Resources::FindObjectsOfTypeAll<GlobalNamespace::SongPreviewPlayer*>()) {
+                if (preview) preview->FadeOut(0.5f);
+            }
+            defaultMusicSuppressed = true;
+            INFO("New Years: stock menu music faded out for replacement track");
+        }
         if (active && musicSource && musicClip && !musicSource->get_isPlaying()) {
             musicSource->set_clip(musicClip.ptr());
             musicSource->Play();
@@ -157,11 +167,12 @@ namespace NewYears::ambience {
             selected = false;
             musicLoading = false;
             musicClip = nullptr;
+            defaultMusicSuppressed = false;
             ambientGo = nullptr;
             musicSource = nullptr;
         }
         if (!ambientGo) {
-            ambientGo = GameObject::New_ctor("NewYearsCelebrationAmbience");
+            ambientGo = GameObject::New_ctor("NewYearsMenuMusicReplacement");
             if (!ambientGo) return;
             // Scene-owned audio is destroyed by Unity on gameplay transition.
             musicSource = ambientGo->AddComponent<AudioSource*>();
@@ -175,7 +186,7 @@ namespace NewYears::ambience {
                 musicSource->set_playOnAwake(false);
                 musicSource->set_spatialBlend(0.0f);
                 musicSource->set_loop(true);
-                musicSource->set_volume(0.25f);
+                musicSource->set_volume(0.65f);
             }
         }
         menuSession = true;
@@ -209,6 +220,7 @@ namespace NewYears::ambience {
             musicSource->set_clip(nullptr);
         }
         musicClip = nullptr;
+        defaultMusicSuppressed = false;
     }
 }
 
