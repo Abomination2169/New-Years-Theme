@@ -21,29 +21,21 @@ using namespace UnityEngine;
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
 namespace NewYears::ball { void Create(); }
 
-// Use Beat Saber's own preview player and original crossfade lifecycle.
-MAKE_HOOK_MATCH(NewYearsPreviewReplace,
+// Identical music hooks to the working Halloween Theme.
+MAKE_HOOK_MATCH(NewYearsSongPreviewOnEnable, &SongPreviewPlayer::OnEnable,
+                void, SongPreviewPlayer* self) {
+    if (getModConfig().EnableCelebrationAmbience.GetValue()) PlayNewYearsMenuSong(self);
+    NewYearsSongPreviewOnEnable(self);
+}
+
+MAKE_HOOK_MATCH(NewYearsSongPreviewCrossfade,
     static_cast<void(SongPreviewPlayer::*)(AudioClip*, float, float, float, bool, System::Action*)>(&SongPreviewPlayer::CrossfadeTo),
     void, SongPreviewPlayer* self, AudioClip* clip, float volume, float startTime,
     float duration, bool isDefault, System::Action* callback) {
-    if (isDefault && getModConfig().EnableCelebrationAmbience.GetValue() &&
-        SceneManagement::SceneManager::GetActiveScene().name != "GameCore") {
-        if (auto replacement = NewYears::ambience::GetReplacementClip()) {
-            clip = replacement;
-        }
-    }
-    NewYearsPreviewReplace(self, clip, volume, startTime, duration, isDefault, callback);
-}
-
-MAKE_HOOK_MATCH(NewYearsDefaultMenuMusic, &SongPreviewPlayer::CrossfadeToDefault,
-                void, SongPreviewPlayer* self) {
     if (getModConfig().EnableCelebrationAmbience.GetValue() &&
-        SceneManagement::SceneManager::GetActiveScene().name != "GameCore") {
-        if (auto replacement = NewYears::ambience::GetReplacementClip()) {
-            self->_defaultAudioClip = replacement;
-        }
-    }
-    NewYearsDefaultMenuMusic(self);
+        self->_defaultAudioClip && self->_defaultAudioClip.ptr() != clip)
+        PlayNewYearsMenuSong(self);
+    NewYearsSongPreviewCrossfade(self, clip, volume, startTime, duration, isDefault, callback);
 }
 
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
@@ -70,10 +62,6 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
                 void, MainMenuViewController* self,
                 bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
     NewYearsMenuActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
-    if (getModConfig().EnableCelebrationAmbience.GetValue()) {
-        NewYears::ambience::Start();
-
-    }
     if (!firstActivation) return;
     NewYears::ball::Create();
     if (getModConfig().EnableConfetti.GetValue())
@@ -90,7 +78,7 @@ MOD_EXTERN_FUNC void late_load() noexcept {
     il2cpp_functions::Init();
     INSTALL_HOOK(PaperLogger, NewYearsEnvironmentColors);
     INSTALL_HOOK(PaperLogger, NewYearsMenuActivate);
-    INSTALL_HOOK(PaperLogger, NewYearsDefaultMenuMusic);
-    INSTALL_HOOK(PaperLogger, NewYearsPreviewReplace);
+    INSTALL_HOOK(PaperLogger, NewYearsSongPreviewOnEnable);
+    INSTALL_HOOK(PaperLogger, NewYearsSongPreviewCrossfade);
     INFO("New Year's Theme hooks installed");
 }
