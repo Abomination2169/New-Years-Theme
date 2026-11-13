@@ -32,7 +32,9 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
                 static_cast<void(SongPreviewPlayer::*)(AudioClip*, float, float, float, bool, System::Action*)>(&SongPreviewPlayer::CrossfadeTo),
                 void, SongPreviewPlayer* self, AudioClip* clip, float volume, float startTime,
                 float duration, bool isDefault, System::Action* callback) {
-    if (!isDefault) NewYearsMarkPreviewRequested();
+    // Startup crossfades can be non-default too; do not cancel the initial
+    // asynchronous menu track before it has started playing.
+    if (!isDefault && NewYearsMenuMusicHasStarted()) NewYearsMarkPreviewRequested();
     const float resumeTime = NewYearsGetMenuResumeTime(clip, isDefault, startTime);
     NewYearsMenuMusicCrossfade(self, clip, volume, resumeTime, duration, isDefault, callback);
 }
