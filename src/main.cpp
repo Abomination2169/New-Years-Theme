@@ -28,7 +28,7 @@ MAKE_HOOK_MATCH(NewYearsSongPreview,
                 float startTime, float duration, bool isDefault,
                 System::Action* onFadeOutCallback) {
     if (getModConfig().EnableCelebrationAmbience.GetValue() &&
-        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name != "GameCore") {
+        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "MenuCore") {
         NewYears::ambience::SetPreviewing(!isDefault && clip != nullptr);
     }
     NewYearsSongPreview(self, clip, volume, startTime, duration, isDefault, onFadeOutCallback);
@@ -38,7 +38,7 @@ MAKE_HOOK_MATCH(NewYearsSongPreview,
 MAKE_HOOK_MATCH(NewYearsDefaultMenuMusic, &SongPreviewPlayer::CrossfadeToDefault,
                 void, SongPreviewPlayer* self) {
     if (getModConfig().EnableCelebrationAmbience.GetValue() &&
-        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name != "GameCore") {
+        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "MenuCore") {
         NewYears::ambience::SetPreviewing(false);
         return;
     }
