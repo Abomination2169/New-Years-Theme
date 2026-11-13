@@ -1,26 +1,26 @@
 # 🎆 New Year's Theme — Beat Saber Quest
 
-A seasonal menu theme for **Meta Quest 3 · Beat Saber 1.40.8_7379**.
+Happy New Years!
 
-## Features
-- Detailed illuminated New Year's ball with a **Happy New Year!** banner
-- Midnight-blue menu lighting and falling confetti
-- Native Beat Saber fireworks controller integration (uses existing game effects where available)
-- Menu music selected from your **installed SongCore custom songs** (`.egg` or `.ogg`), without bundling copyrighted tracks
-- Song previews remain audible; custom menu music resumes after previews
-- Menu music starts when the main menu activates, rather than during early audio initialization
-- Independent config switches for confetti, fireworks, lighting and menu music
+Transform your Beat Saber menu with golden harvest lighting, seasonal decorations, and gently falling leaves!
 
-## Install
-Install the release QMOD with a compatible Quest mod manager on **Beat Saber 1.40.8_7379**. SongCore and installed custom songs are needed for custom menu music; otherwise Beat Saber's normal menu audio remains available. Do not install simultaneously with another theme that modifies the same menu environment unless coordinated through Holiday Theme Switcher.
+Based on the fantastic Christmas Mod by Vcmikuu and CatsaCode.
 
-## Build from source
-Use the included GitHub Actions workflow, or install QPM CLI and the Quest Android NDK, then run `qpm restore`, `qpm qmod manifest`, configure CMake and build, and run `qpm qmod zip --import mod.json --skip_build`. The workflow validates the packaged QMOD and publishes both the QMOD and a source archive for version tags.
+Note: Development assisted with use of A.I. Please support talented artists and coders whenever possible.
 
-## Compatibility and limitations
-The mod is tested on Quest 3 with Beat Saber 1.40.8. The fireworks integration enables an existing native controller when available; it does not synthesize new fireworks or guarantee audio in every environment. Automatic advancement between menu tracks is not yet implemented. Test before using with other environment-changing mods.
+Compatible with: Beat Saber 1.40.8 (Quest)
 
-## Credits and licensing
-Created by **Abomination2169** with AI assistance. Derived from [Halloween Theme](https://github.com/Abomination2169/Halloween-Theme), itself inspired by [Christmas Theme](https://github.com/vcmikuu/ChristmasTheme) by laynia (vcmikuu) and CatsaCode. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for attribution and asset details.
+License and source code
+See THIRD_PARTY_NOTICES.md for detailed attribution, audio licensing, and artwork provenance.
 
-Source code is licensed under **GNU GPLv3**; see [LICENSE](LICENSE). No installed custom-song recordings are redistributed.
+This project is a modified derivative of Christmas Theme, created by Vcmikuu and CatsaCode. It contains modified Christmas Theme code alongside new seasonal modifications. The original developers have authorized reuse under GNU GPL version 3 with proper credit.
+
+The combined mod's code is distributed under the GNU General Public License, version 3 (GPL-3.0-only). See the LICENSE file for the complete terms. You may study, modify, and redistribute the covered code under GPLv3, subject to its requirements. This is not an official release by the Christmas Theme developers.
+
+Source and binaries: The GitHub repository contains the mod's source and build configuration; the releases page provides downloadable QMODs and source archives. For each binary release, use the matching version/tag of the source, not necessarily the latest main branch. The source supplied for a QMOD must correspond to that build; release assets and source archives require review to confirm this.
+
+Attribution and modifications
+Vcmikuu and CatsaCode: Creators of the original Christmas Theme, on whose source this mod is based. Thank you both for the inspiration and your permission.
+Abomination2169: Seasonal adaptation, code and asset changes, maintenance and distribution of Thanksgiving Theme.
+Quest Mod Template: By Lauriethefish, danrouse and Bobby Shmurner, originally provided under the Unlicense. Credit also goes to the dependency/library authors acknowledged in Christmas Theme's README.
+This mod substantially changes the original Christmas setting into a thanksgiving theme, including its seasonal effects and presentation. These modifications were made in 2026. Development was assisted with AI; please support the original artists and developers. Third-party assets, audio, and dependencies may carry their own licenses and require separate review; GPLv3 permission for Christmas Theme code does not automatically cover them.
