@@ -2,7 +2,7 @@
 
 Watch New Years Theme in action!
 
-
+![New Year's Theme — Beat Saber](New-Years-Banner.png)
 
 Happy New Years!
 
@@ -22,7 +22,7 @@ This project is a modified derivative of [Christmas Theme](https://github.com/vc
 
 The combined mod's code is distributed under the **GNU General Public License, version 3 (GPL-3.0-only)**. See the [LICENSE](LICENSE) file for the complete terms. You may study, modify, and redistribute the covered code under GPLv3, subject to its requirements. This is not an official release by the Christmas Theme developers.
 
-**Source and binaries:** The [GitHub repository](https://github.com/Abomination2169/Thanksgiving-Theme) contains the mod's source and build configuration; the [releases page](https://github.com/Abomination2169/Thanksgiving-Theme/releases) provides downloadable QMODs and source archives. For each binary release, use the matching version/tag of the source, not necessarily the latest `main` branch. The source supplied for a QMOD must correspond to that build; release assets and source archives require review to confirm this.
+**Source and binaries:** The [GitHub repository](https://github.com/Abomination2169/New-Years-Theme) contains the mod's source and build configuration; the [releases page](https://github.com/Abomination2169/New-Years-Theme/releases) provides downloadable QMODs and source archives. For each binary release, use the matching version/tag of the source, not necessarily the latest `main` branch. The source supplied for a QMOD must correspond to that build; release assets and source archives require review to confirm this.
 
 ## Attribution and modifications
 
