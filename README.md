@@ -2,7 +2,7 @@
 
 Watch New Years Theme in action!
 
-![New Year's Theme — Beat Saber](New-Years-Banner.png)
+![New Year's Theme — Beat Saber](NewYears-README.png)
 
 Happy New Years!
 
