@@ -65,6 +65,8 @@ jobs:
               raise SystemExit("Manifest no longer targets Beat Saber 1.40.8_7379")
           if manifest.get("modFiles") != ["libnewyears.so"]:
               raise SystemExit("Unexpected New-Years library declaration")
+          if manifest.get("coverImage") != "NewYears-README.png":
+              raise SystemExit("Incorrect New Years cover image for MBF")
           if not Path(manifest["coverImage"]).is_file():
               raise SystemExit("Cover image is missing")
           for entry in manifest.get("fileCopies", []):
@@ -111,6 +113,8 @@ jobs:
               if "libnewyears.so" not in names:
                   raise SystemExit("QMOD is missing libnewyears.so")
               cover = manifest.get("coverImage")
+              if cover != "NewYears-README.png":
+                  raise SystemExit("Incorrect packaged cover image for MBF")
               if cover and cover not in names:
                   raise SystemExit(f"QMOD is missing cover image: {cover}")
               if manifest.get("fileCopies", []) != []:
