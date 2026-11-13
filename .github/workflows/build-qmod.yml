@@ -1,0 +1,84 @@
+name: Build New Year's QMOD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build unzip curl python3
+      - name: Install QPM CLI
+        env:
+          QPM_VERSION: v1.5.12
+        run: |
+          curl -fsSL "https://github.com/QuestPackageManager/QPM.CLI/releases/download/${QPM_VERSION}/qpm-linux-x64.zip" -o "$RUNNER_TEMP/qpm.zip"
+          mkdir -p "$RUNNER_TEMP/qpm"
+          unzip -q "$RUNNER_TEMP/qpm.zip" -d "$RUNNER_TEMP/qpm"
+          QPM_BIN="$(find "$RUNNER_TEMP/qpm" -type f -name qpm | head -n 1)"
+          test -n "$QPM_BIN"
+          chmod +x "$QPM_BIN"
+          sudo install "$QPM_BIN" /usr/local/bin/qpm
+          qpm --version
+      - name: Resolve NDK and restore dependencies
+        run: |
+          qpm ndk resolve -d
+          qpm restore
+      - name: Generate fresh manifest from template
+        run: |
+          qpm qmod manifest
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          m = json.loads(Path('mod.json').read_text())
+          expected = {'name': "New Year's Theme", 'id': 'newyears', 'version': '1.0.0', 'description': 'Happy New Years!', 'packageVersion': '1.40.8_7379'}
+          for key, value in expected.items():
+              assert m.get(key) == value, f'{key}: {m.get(key)!r} != {value!r}'
+          assert Path(m['coverImage']).is_file(), 'Missing cover image'
+          print('Manifest metadata verified')
+          PY
+      - name: Configure and compile
+        run: |
+          NDK_TOOLCHAIN="$(find "$HOME/.local/share/QPM-RS/ndk" -path '*/build/cmake/android.toolchain.cmake' -print -quit)"
+          test -n "$NDK_TOOLCHAIN"
+          echo "ANDROID_NDK_HOME=${NDK_TOOLCHAIN%/build/cmake/android.toolchain.cmake}" >> "$GITHUB_ENV"
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel
+          test -s build/libnewyears.so
+      - name: Package QMOD
+        run: |
+          qpm qmod zip --import mod.json --skip_build -i ./build -i ./extern/libs -i .
+          test -s New-Years-Theme.qmod || { ls -la *.qmod; exit 1; }
+      - name: Verify packaged metadata and binary
+        run: |
+          python3 - <<'PY'
+          import json, zipfile
+          with zipfile.ZipFile('New-Years-Theme.qmod') as z:
+              names = set(z.namelist())
+              assert 'mod.json' in names
+              m = json.loads(z.read('mod.json'))
+              assert m['name'] == "New Year's Theme"
+              assert m['id'] == 'newyears'
+              assert m['version'] == '1.0.0'
+              assert m['description'] == 'Happy New Years!'
+              assert m['packageVersion'] == '1.40.8_7379'
+              assert 'libnewyears.so' in names
+              assert m['coverImage'] in names
+          print('QMOD archive validated')
+          PY
+      - name: Upload QMOD for testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: New-Years-Theme-QMOD
+          path: New-Years-Theme.qmod
+          if-no-files-found: error
