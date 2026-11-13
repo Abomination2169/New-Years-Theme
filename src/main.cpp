@@ -6,6 +6,8 @@
 
 #include "GlobalNamespace/LightWithIdManager.hpp"
 #include "GlobalNamespace/MainMenuViewController.hpp"
+#include "GlobalNamespace/SongPreviewPlayer.hpp"
+#include "UnityEngine/Resources.hpp"
 #include "UnityEngine/SceneManagement/SceneManager.hpp"
 #include "UnityEngine/SceneManagement/SceneManagement.hpp"
 #include "UnityEngine/Color.hpp"
@@ -17,6 +19,17 @@ using namespace UnityEngine;
 
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
 namespace NewYears::ball { void Create(); }
+namespace NewYears::decor { void Create(); }
+
+// Keep the stock menu preview from crossfading back over the custom soundtrack.
+MAKE_HOOK_MATCH(NewYearsDefaultMenuMusic, &SongPreviewPlayer::CrossfadeToDefault,
+                void, SongPreviewPlayer* self) {
+    if (getModConfig().EnableCelebrationAmbience.GetValue() &&
+        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name != "GameCore") {
+        return;
+    }
+    NewYearsDefaultMenuMusic(self);
+}
 
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
                 void, LightWithIdManager* self, int lightId, Color color) {
@@ -42,10 +55,15 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
                 void, MainMenuViewController* self,
                 bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
     NewYearsMenuActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
-    if (getModConfig().EnableCelebrationAmbience.GetValue())
+    if (getModConfig().EnableCelebrationAmbience.GetValue()) {
         NewYears::ambience::Start();
+        for (auto preview : Resources::FindObjectsOfTypeAll<SongPreviewPlayer*>()) {
+            if (preview) preview->FadeOut(1.0f);
+        }
+    }
     if (!firstActivation) return;
     NewYears::ball::Create();
+    NewYears::decor::Create();
     if (getModConfig().EnableConfetti.GetValue())
         NewYears::confetti::CreateConfetti();
 }
@@ -60,5 +78,6 @@ MOD_EXTERN_FUNC void late_load() noexcept {
     il2cpp_functions::Init();
     INSTALL_HOOK(PaperLogger, NewYearsEnvironmentColors);
     INSTALL_HOOK(PaperLogger, NewYearsMenuActivate);
+    INSTALL_HOOK(PaperLogger, NewYearsDefaultMenuMusic);
     INFO("New Year's Theme hooks installed");
 }
