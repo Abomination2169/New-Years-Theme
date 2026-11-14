@@ -21,12 +21,20 @@ using namespace UnityEngine;
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
 namespace NewYears::ball { void Create(); void Destroy(); }
 
+static bool newYearsMenuEffectsNeedRestore = false;
+static void RestoreNewYearsMenuEffects();
+
 // Start menu music only after native initialization. Never substitute previews.
 MAKE_HOOK_MATCH(NewYearsMenuMusicOnEnable, &SongPreviewPlayer::OnEnable,
                 void, SongPreviewPlayer* self) {
     NewYearsMenuMusicOnEnable(self);
     if (getModConfig().EnableCelebrationAmbience.GetValue())
         NewYearsRememberMenuPlayer(self);
+    // SongPreviewPlayer is also enabled when returning directly to song selection.
+    // Only restore after gameplay has ended, never on the GameCore results screen.
+    if (newYearsMenuEffectsNeedRestore &&
+        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name != "GameCore")
+        RestoreNewYearsMenuEffects();
 }
 
 MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
@@ -38,14 +46,16 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
     if (!isDefault && NewYearsMenuMusicHasStarted()) NewYearsMarkPreviewRequested();
     const float resumeTime = NewYearsGetMenuResumeTime(clip, isDefault, startTime);
     NewYearsMenuMusicCrossfade(self, clip, volume, resumeTime, duration, isDefault, callback);
+    // The preview player may already be enabled across the gameplay transition.
+    if (newYearsMenuEffectsNeedRestore &&
+        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name != "GameCore")
+        RestoreNewYearsMenuEffects();
 }
 
 // Track the transition out of gameplay from a callback used by both the main
 // menu and song-selection preview environment. Avoid changing the native
 // fireworks controller while the results screen is active.
 static bool newYearsMenuEffectsSuspendedForGameplay = false;
-static bool newYearsMenuEffectsNeedRestore = false;
-
 static void RestoreNewYearsMenuEffects() {
     if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") return;
     if (getModConfig().EnableFireworks.GetValue())
@@ -62,9 +72,9 @@ MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
     if (inGameplay) {
         if (!newYearsMenuEffectsSuspendedForGameplay) {
             // Release our menu-owned particle objects when gameplay begins.
-            // Do NOT disable the native FireworksController here: Beat Saber
-            // owns the results-screen fireworks lifecycle.
-            NewYears::fireworks::Forget();
+            // Restore the native controller's original enabled state before
+            // results, so Beat Saber's own success/failure rules remain in charge.
+            NewYears::fireworks::Destroy();
             NewYears::confetti::DestroyConfetti();
             NewYears::ball::Destroy();
             newYearsMenuEffectsSuspendedForGameplay = true;
