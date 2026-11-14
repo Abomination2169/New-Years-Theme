@@ -5,6 +5,8 @@
 #include "UnityEngine/Resources.hpp"
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Behaviour.hpp"
+#include "UnityEngine/SceneManagement/SceneManager.hpp"
+#include <string>
 
 using namespace UnityEngine;
 using namespace GlobalNamespace;
@@ -18,10 +20,25 @@ namespace NewYears::fireworks {
     bool enabledByMod = false;
 
     void Create() {
-        if (enabledByMod) return;
+        const auto scene = UnityEngine::SceneManagement::SceneManager::GetActiveScene();
+        const std::string sceneName = static_cast<std::string>(scene.name);
+        if (sceneName == "GameCore") {
+            INFO("New Years fireworks: skip activation in GameCore/results");
+            return;
+        }
+        if (controller && controller->gameObject && controller->gameObject->activeInHierarchy) {
+            INFO("New Years fireworks: retained controller enabled={} modOwned={}",
+                 controller->get_enabled(), enabledByMod);
+            if (enabledByMod) return;
+        } else {
+            controller = nullptr;
+            enabledByMod = false;
+        }
+        INFO("New Years fireworks: scanning active controllers in scene={}", sceneName);
         for (auto* candidate : Resources::FindObjectsOfTypeAll<FireworksController*>()) {
             if (!candidate || !candidate->gameObject || !candidate->gameObject->activeInHierarchy)
                 continue;
+            INFO("New Years fireworks: candidate enabled={}", candidate->get_enabled());
             controller = candidate;
             previouslyEnabled = candidate->get_enabled();
             if (!previouslyEnabled) {
@@ -33,7 +50,7 @@ namespace NewYears::fireworks {
             }
             return;
         }
-        WARNING("New Years: no active-scene native FireworksController found; no replacement particles created");
+        WARNING("New Years: no active FireworksController in scene={}; retry on next menu callback", sceneName);
     }
 
     void Destroy() {
