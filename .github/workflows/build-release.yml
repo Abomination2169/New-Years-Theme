@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - test/new-years-ball-preview-restore
     tags:
       - "v*"
   pull_request:
