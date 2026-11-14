@@ -25,7 +25,8 @@ namespace NewYears::fireworks {
     static bool IsMenuScene() {
         auto scene = UnityEngine::SceneManagement::SceneManager::GetActiveScene();
         const std::string name = static_cast<std::string>(scene.name);
-        return name != "GameCore" && name != "EmptyTransition";
+        auto* logo = GameObject::Find("SaberLogo");
+        return name != "GameCore" && name != "EmptyTransition" && logo && logo->activeInHierarchy;
     }
 
     void Create() {
