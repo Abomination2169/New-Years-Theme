@@ -47,7 +47,7 @@ static bool newYearsMenuEffectsSuspendedForGameplay = false;
 static bool newYearsMenuEffectsNeedRestore = false;
 
 static void RestoreNewYearsMenuEffects() {
-    if (SceneManager::GetActiveScene().name == "GameCore") return;
+    if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") return;
     if (getModConfig().EnableFireworks.GetValue())
         NewYears::fireworks::Create();
     NewYears::ball::Create();
@@ -58,7 +58,7 @@ static void RestoreNewYearsMenuEffects() {
 
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
                 void, LightWithIdManager* self, int lightId, Color color) {
-    const bool inGameplay = SceneManager::GetActiveScene().name == "GameCore";
+    const bool inGameplay = UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore";
     if (inGameplay) {
         if (!newYearsMenuEffectsSuspendedForGameplay) {
             // Release our menu-owned particle objects when gameplay begins.
