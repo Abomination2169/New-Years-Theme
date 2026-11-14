@@ -84,8 +84,8 @@ namespace NewYears::fireworks {
             tint.colorMin = colors[i];
             tint.colorMax = colors[i];
             ParticleController::MainModule::set_startColor(ps, tint);
-            auto* material = renderer->get_material();
-            auto* shader = Shader::Find("Sprites/Default");
+            auto material = renderer->get_material();
+            auto shader = Shader::Find("Sprites/Default");
             if (material && shader) {
                 material->set_shader(shader);
                 material->SetColor(StringW("_Color"), colors[i]);
