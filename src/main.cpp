@@ -40,25 +40,56 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
     NewYearsMenuMusicCrossfade(self, clip, volume, resumeTime, duration, isDefault, callback);
 }
 
+// Track the transition out of gameplay from a callback used by both the main
+// menu and song-selection preview environment. Avoid changing the native
+// fireworks controller while the results screen is active.
+static bool newYearsMenuEffectsSuspendedForGameplay = false;
+static bool newYearsMenuEffectsNeedRestore = false;
+
+static void RestoreNewYearsMenuEffects() {
+    if (SceneManager::GetActiveScene().name == "GameCore") return;
+    if (getModConfig().EnableFireworks.GetValue())
+        NewYears::fireworks::Create();
+    NewYears::ball::Create();
+    if (getModConfig().EnableConfetti.GetValue())
+        NewYears::confetti::CreateConfetti();
+    newYearsMenuEffectsNeedRestore = false;
+}
+
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
                 void, LightWithIdManager* self, int lightId, Color color) {
-    if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") {
-        NewYears::fireworks::Destroy();
-        NewYears::confetti::DestroyConfetti();
-        NewYears::ball::Destroy();
+    const bool inGameplay = SceneManager::GetActiveScene().name == "GameCore";
+    if (inGameplay) {
+        if (!newYearsMenuEffectsSuspendedForGameplay) {
+            // Release our menu-owned particle objects when gameplay begins.
+            // Do NOT disable the native FireworksController here: Beat Saber
+            // owns the results-screen fireworks lifecycle.
+            NewYears::fireworks::Forget();
+            NewYears::confetti::DestroyConfetti();
+            NewYears::ball::Destroy();
+            newYearsMenuEffectsSuspendedForGameplay = true;
+            newYearsMenuEffectsNeedRestore = true;
+        }
+        NewYearsEnvironmentColors(self, lightId, color);
+        return;
     }
-    if (!getModConfig().EnableMidnightLighting.GetValue() ||
-        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") {
+
+    if (newYearsMenuEffectsSuspendedForGameplay)
+        newYearsMenuEffectsSuspendedForGameplay = false;
+
+    // This hook is invoked on the returning menu environment even when
+    // MainMenuViewController::DidActivate is not called (preview-only return).
+    // Recreate only once, never from inside GameCore/results.
+    if (newYearsMenuEffectsNeedRestore)
+        RestoreNewYearsMenuEffects();
+
+    if (!getModConfig().EnableMidnightLighting.GetValue()) {
         NewYearsEnvironmentColors(self, lightId, color);
         return;
     }
     const Color navy(0.035f, 0.095f, 0.31f, color.a);
-    // A coherent midnight-blue wash across ALL environment lights.
-    // Gold and silver stay as small accents on the Beat Saber neon sign.
     const Color tint = navy;
-    // Avoid crushing floor/near-field illumination to near-black.
-    // Retain significantly more of the original light intensity.
-    const float blend = 0.52f;
+    constexpr float blend = 0.52f;
     NewYearsEnvironmentColors(self, lightId,
         Color(color.r * (1 - blend) + tint.r * blend,
               color.g * (1 - blend) + tint.g * blend,
@@ -71,11 +102,7 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
     NewYearsMenuActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
     if (getModConfig().EnableCelebrationAmbience.GetValue())
         NewYearsMainMenuActivated();
-    if (getModConfig().EnableFireworks.GetValue())
-        NewYears::fireworks::Create();
-    NewYears::ball::Create();
-    if (getModConfig().EnableConfetti.GetValue())
-        NewYears::confetti::CreateConfetti();
+    RestoreNewYearsMenuEffects();
 }
 
 MOD_EXTERN_FUNC void setup(CModInfo* info) noexcept {
