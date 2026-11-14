@@ -12,6 +12,7 @@
 #include "UnityEngine/SceneManagement/SceneManager.hpp"
 #include "UnityEngine/SceneManagement/SceneManagement.hpp"
 #include "UnityEngine/Color.hpp"
+#include "UnityEngine/GameObject.hpp"
 #include "custom-types/shared/macros.hpp"
 #include "scotland2/shared/modloader.h"
 #include <string>
@@ -23,6 +24,10 @@ static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
 namespace NewYears::ball { void Create(); void Destroy(); }
 
 static bool newYearsMenuEffectsNeedRestore = false;
+static bool NewYearsHasLiveMenuAnchor() {
+    auto* logo = UnityEngine::GameObject::Find("SaberLogo");
+    return logo && logo->activeInHierarchy;
+}
 static void RestoreNewYearsMenuEffects();
 static void LogNewYearsLifecycle(const char* event) {
     auto scene = UnityEngine::SceneManagement::SceneManager::GetActiveScene();
@@ -41,7 +46,8 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicOnEnable, &SongPreviewPlayer::OnEnable,
     // SongPreviewPlayer is also enabled when returning directly to song selection.
     // Only restore after gameplay has ended, never on the GameCore results screen.
     if (newYearsMenuEffectsNeedRestore &&
-        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name != "GameCore")
+        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name != "GameCore" &&
+        NewYearsHasLiveMenuAnchor())
         RestoreNewYearsMenuEffects();
 }
 
@@ -58,7 +64,8 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
         LogNewYearsLifecycle("SongPreviewPlayer.CrossfadeTo");
     // The preview player may already be enabled across the gameplay transition.
     if (newYearsMenuEffectsNeedRestore &&
-        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name != "GameCore")
+        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name != "GameCore" &&
+        NewYearsHasLiveMenuAnchor())
         RestoreNewYearsMenuEffects();
 }
 
@@ -68,7 +75,8 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
 static bool newYearsMenuEffectsSuspendedForGameplay = false;
 static void RestoreNewYearsMenuEffects() {
     LogNewYearsLifecycle("RestoreEffects.attempt");
-    if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") return;
+    if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore" ||
+        !NewYearsHasLiveMenuAnchor()) return;
     if (getModConfig().EnableFireworks.GetValue())
         NewYears::fireworks::Create();
     NewYears::ball::Create();
