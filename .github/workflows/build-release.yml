@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - test/new-years-preview-results-fireworks
     tags:
       - "v*"
   pull_request:
