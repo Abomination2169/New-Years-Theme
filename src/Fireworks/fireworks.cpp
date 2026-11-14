@@ -20,7 +20,7 @@ namespace NewYears::fireworks {
     bool enabledByMod = false;
 
     void Create() {
-        const auto scene = UnityEngine::SceneManagement::SceneManager::GetActiveScene();
+        auto scene = UnityEngine::SceneManagement::SceneManager::GetActiveScene();
         const std::string sceneName = static_cast<std::string>(scene.name);
         if (sceneName == "GameCore") {
             INFO("New Years fireworks: skip activation in GameCore/results");
