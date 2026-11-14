@@ -25,7 +25,7 @@ namespace NewYears::ball { void Create(); void Destroy(); }
 static bool newYearsMenuEffectsNeedRestore = false;
 static void RestoreNewYearsMenuEffects();
 static void LogNewYearsLifecycle(const char* event) {
-    const auto scene = UnityEngine::SceneManagement::SceneManager::GetActiveScene();
+    auto scene = UnityEngine::SceneManagement::SceneManager::GetActiveScene();
     const std::string sceneName = static_cast<std::string>(scene.name);
     INFO("NY lifecycle {} scene={} pending={}", event, sceneName,
          newYearsMenuEffectsNeedRestore);
