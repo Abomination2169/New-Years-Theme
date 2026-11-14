@@ -42,4 +42,12 @@ namespace NewYears::fireworks {
         controller = nullptr;
         enabledByMod = false;
     }
+    void Forget() {
+        // Gameplay/results own the native controller. Keep its enabled state
+        // untouched; just discard any menu-side reference to it.
+        controller = nullptr;
+        enabledByMod = false;
+        previouslyEnabled = false;
+    }
+
 }
