@@ -14,6 +14,7 @@
 #include "UnityEngine/Color.hpp"
 #include "custom-types/shared/macros.hpp"
 #include "scotland2/shared/modloader.h"
+#include <string>
 
 using namespace GlobalNamespace;
 using namespace UnityEngine;
@@ -23,11 +24,18 @@ namespace NewYears::ball { void Create(); void Destroy(); }
 
 static bool newYearsMenuEffectsNeedRestore = false;
 static void RestoreNewYearsMenuEffects();
+static void LogNewYearsLifecycle(const char* event) {
+    const auto scene = UnityEngine::SceneManagement::SceneManager::GetActiveScene();
+    const std::string sceneName = static_cast<std::string>(scene.name);
+    INFO("NY lifecycle {} scene={} pending={}", event, sceneName,
+         newYearsMenuEffectsNeedRestore);
+}
 
 // Start menu music only after native initialization. Never substitute previews.
 MAKE_HOOK_MATCH(NewYearsMenuMusicOnEnable, &SongPreviewPlayer::OnEnable,
                 void, SongPreviewPlayer* self) {
     NewYearsMenuMusicOnEnable(self);
+    LogNewYearsLifecycle("SongPreviewPlayer.OnEnable");
     if (getModConfig().EnableCelebrationAmbience.GetValue())
         NewYearsRememberMenuPlayer(self);
     // SongPreviewPlayer is also enabled when returning directly to song selection.
@@ -46,6 +54,8 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
     if (!isDefault && NewYearsMenuMusicHasStarted()) NewYearsMarkPreviewRequested();
     const float resumeTime = NewYearsGetMenuResumeTime(clip, isDefault, startTime);
     NewYearsMenuMusicCrossfade(self, clip, volume, resumeTime, duration, isDefault, callback);
+    if (newYearsMenuEffectsNeedRestore)
+        LogNewYearsLifecycle("SongPreviewPlayer.CrossfadeTo");
     // The preview player may already be enabled across the gameplay transition.
     if (newYearsMenuEffectsNeedRestore &&
         UnityEngine::SceneManagement::SceneManager::GetActiveScene().name != "GameCore")
@@ -57,6 +67,7 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
 // fireworks controller while the results screen is active.
 static bool newYearsMenuEffectsSuspendedForGameplay = false;
 static void RestoreNewYearsMenuEffects() {
+    LogNewYearsLifecycle("RestoreEffects.attempt");
     if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") return;
     if (getModConfig().EnableFireworks.GetValue())
         NewYears::fireworks::Create();
@@ -74,6 +85,7 @@ MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
             // Release our menu-owned particle objects when gameplay begins.
             // Restore the native controller's original enabled state before
             // results, so Beat Saber's own success/failure rules remain in charge.
+            LogNewYearsLifecycle("GameCore.cleanup");
             NewYears::fireworks::Destroy();
             NewYears::confetti::DestroyConfetti();
             NewYears::ball::Destroy();
@@ -90,8 +102,10 @@ MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
     // This hook is invoked on the returning menu environment even when
     // MainMenuViewController::DidActivate is not called (preview-only return).
     // Recreate only once, never from inside GameCore/results.
-    if (newYearsMenuEffectsNeedRestore)
+    if (newYearsMenuEffectsNeedRestore) {
+        LogNewYearsLifecycle("MenuLighting.restore");
         RestoreNewYearsMenuEffects();
+    }
 
     if (!getModConfig().EnableMidnightLighting.GetValue()) {
         NewYearsEnvironmentColors(self, lightId, color);
@@ -110,6 +124,7 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
                 void, MainMenuViewController* self,
                 bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
     NewYearsMenuActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
+    LogNewYearsLifecycle("MainMenu.DidActivate");
     if (getModConfig().EnableCelebrationAmbience.GetValue())
         NewYearsMainMenuActivated();
     RestoreNewYearsMenuEffects();
