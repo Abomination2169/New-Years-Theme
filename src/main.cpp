@@ -21,12 +21,18 @@ using namespace UnityEngine;
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
 namespace NewYears::ball { void Create(); void Destroy(); }
 static bool confettiNeedsPreviewRestore = false;
-static void RestorePreviewConfetti() {
-    if (!confettiNeedsPreviewRestore ||
-        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") return;
-    if (getModConfig().EnableConfetti.GetValue())
-        NewYears::confetti::CreateConfetti();
-    confettiNeedsPreviewRestore = false;
+static bool ballNeedsPreviewRestore = false;
+static void RestorePreviewDecor() {
+    if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") return;
+    if (confettiNeedsPreviewRestore) {
+        if (getModConfig().EnableConfetti.GetValue())
+            NewYears::confetti::CreateConfetti();
+        confettiNeedsPreviewRestore = false;
+    }
+    if (ballNeedsPreviewRestore) {
+        NewYears::ball::Create();
+        ballNeedsPreviewRestore = false;
+    }
 }
 
 // Start menu music only after native initialization. Never substitute previews.
@@ -35,7 +41,7 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicOnEnable, &SongPreviewPlayer::OnEnable,
     NewYearsMenuMusicOnEnable(self);
     if (getModConfig().EnableCelebrationAmbience.GetValue())
         NewYearsRememberMenuPlayer(self);
-    RestorePreviewConfetti();
+    RestorePreviewDecor();
 }
 
 MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
@@ -47,7 +53,7 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
     if (!isDefault && NewYearsMenuMusicHasStarted()) NewYearsMarkPreviewRequested();
     const float resumeTime = NewYearsGetMenuResumeTime(clip, isDefault, startTime);
     NewYearsMenuMusicCrossfade(self, clip, volume, resumeTime, duration, isDefault, callback);
-    RestorePreviewConfetti();
+    RestorePreviewDecor();
 }
 
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
@@ -57,6 +63,7 @@ MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
         NewYears::confetti::DestroyConfetti();
         confettiNeedsPreviewRestore = true;
         NewYears::ball::Destroy();
+        ballNeedsPreviewRestore = true;
     }
     if (!getModConfig().EnableMidnightLighting.GetValue() ||
         UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") {
@@ -88,6 +95,7 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
     if (getModConfig().EnableConfetti.GetValue())
         NewYears::confetti::CreateConfetti();
     confettiNeedsPreviewRestore = false;
+    ballNeedsPreviewRestore = false;
 }
 
 MOD_EXTERN_FUNC void setup(CModInfo* info) noexcept {
