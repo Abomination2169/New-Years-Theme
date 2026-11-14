@@ -20,6 +20,14 @@ using namespace UnityEngine;
 
 static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
 namespace NewYears::ball { void Create(); void Destroy(); }
+static bool confettiNeedsPreviewRestore = false;
+static void RestorePreviewConfetti() {
+    if (!confettiNeedsPreviewRestore ||
+        UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") return;
+    if (getModConfig().EnableConfetti.GetValue())
+        NewYears::confetti::CreateConfetti();
+    confettiNeedsPreviewRestore = false;
+}
 
 // Start menu music only after native initialization. Never substitute previews.
 MAKE_HOOK_MATCH(NewYearsMenuMusicOnEnable, &SongPreviewPlayer::OnEnable,
@@ -27,6 +35,7 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicOnEnable, &SongPreviewPlayer::OnEnable,
     NewYearsMenuMusicOnEnable(self);
     if (getModConfig().EnableCelebrationAmbience.GetValue())
         NewYearsRememberMenuPlayer(self);
+    RestorePreviewConfetti();
 }
 
 MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
@@ -38,6 +47,7 @@ MAKE_HOOK_MATCH(NewYearsMenuMusicCrossfade,
     if (!isDefault && NewYearsMenuMusicHasStarted()) NewYearsMarkPreviewRequested();
     const float resumeTime = NewYearsGetMenuResumeTime(clip, isDefault, startTime);
     NewYearsMenuMusicCrossfade(self, clip, volume, resumeTime, duration, isDefault, callback);
+    RestorePreviewConfetti();
 }
 
 MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
@@ -45,6 +55,7 @@ MAKE_HOOK_MATCH(NewYearsEnvironmentColors, &LightWithIdManager::SetColorForId,
     if (UnityEngine::SceneManagement::SceneManager::GetActiveScene().name == "GameCore") {
         NewYears::fireworks::Destroy();
         NewYears::confetti::DestroyConfetti();
+        confettiNeedsPreviewRestore = true;
         NewYears::ball::Destroy();
     }
     if (!getModConfig().EnableMidnightLighting.GetValue() ||
@@ -76,6 +87,7 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
     NewYears::ball::Create();
     if (getModConfig().EnableConfetti.GetValue())
         NewYears::confetti::CreateConfetti();
+    confettiNeedsPreviewRestore = false;
 }
 
 MOD_EXTERN_FUNC void setup(CModInfo* info) noexcept {
