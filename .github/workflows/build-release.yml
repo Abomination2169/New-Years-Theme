@@ -117,18 +117,20 @@ jobs:
                   raise SystemExit("Incorrect packaged cover image for MBF")
               if cover and cover not in names:
                   raise SystemExit(f"QMOD is missing cover image: {cover}")
-              if manifest.get("fileCopies", []) != []:
-                  raise SystemExit("New Years QMOD must not package third-party audio")
+              if manifest.get("fileCopies", []) != [{"name":"new_year_celebration.ogg","destination":"/sdcard/ModData/com.beatgames.beatsaber/Mods/NewYears/new_year_celebration.ogg"}]:
+                  raise SystemExit("Unexpected celebration audio manifest")
+              if "new_year_celebration.ogg" not in names:
+                  raise SystemExit("Missing celebration audio")
               if "Midnight_Synthwave_Tokyo.ogg" in names:
                   raise SystemExit("Unexpected bundled third-party soundtrack")
-          allowed = {"mod.json", "libnewyears.so", cover}
+          allowed = {"mod.json", "libnewyears.so", cover, "new_year_celebration.ogg"}
           unexpected = sorted(names - allowed)
           if unexpected:
               raise SystemExit(f"Unexpected QMOD entries: {unexpected}")
           for name in sorted(names):
               item = archive.getinfo(name)
               print(f"PACKAGE ENTRY {name}: raw={item.file_size} compressed={item.compress_size}")
-          print("QMOD validated: Beat Saber 1.40.8, library, cover, no bundled third-party music.")
+          print("QMOD validated: Beat Saber 1.40.8, library, cover, celebration SFX.")
           PY
 
       - name: Upload build artifact
