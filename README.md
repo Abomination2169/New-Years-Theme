@@ -6,7 +6,7 @@ Watch New Years Theme in action!
 
 ▶️ **Watch on YouTube:** https://www.youtube.com/watch?v=I4uneD_i5p0
 
-Happy New Years!
+Happy New Year!
 
 Transform your Beat Saber menu into a dazzling midnight celebration with colorful fireworks, falling confetti, and custom songs from your very own playlist!
 
