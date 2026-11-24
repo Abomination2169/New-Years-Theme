@@ -28,7 +28,7 @@ assert "NewYears::confetti::DestroyConfetti()" in main_source
 assert "NewYears::ball::Destroy()" in main_source
 assert "PlayNewYearsMenuSong" not in main_source
 assert "NewYearsDefaultMenuMusic" not in main_source
-assert manifest["fileCopies"] == []
+assert manifest["fileCopies"] == [{"name":"new_year_celebration.ogg","destination":"/sdcard/ModData/com.beatgames.beatsaber/Mods/NewYears/new_year_celebration.ogg"}]
 for e in manifest["fileCopies"]:
     assert (root / "FileCopies" / e["name"]).is_file(), e
 print("PASS: New Year's 1.40.8 metadata and assets; guarded menu audio with native song-preview transitions")
