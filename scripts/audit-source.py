@@ -9,7 +9,7 @@ manifest = json.loads((root / "mod.template.json").read_text())
 assert qpm["info"]["id"] == shared["config"]["info"]["id"] == manifest["id"] == "newyears"
 assert manifest["packageVersion"] == "1.40.8_7379"
 assert manifest["version"] == qpm["info"]["version"] == "1.0.0"
-assert manifest["description"] == "Happy New Years!"
+assert manifest["description"] == "Happy New Year!"
 assert qpm["info"]["additionalData"]["overrideSoName"] == "libnewyears.so"
 assert manifest["coverImage"] == "NewYears-README.png"
 assert (root / manifest["coverImage"]).is_file()
