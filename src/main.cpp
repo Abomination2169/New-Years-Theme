@@ -14,6 +14,15 @@
 #include "Confetti/confetti.hpp"
 #include "Fireworks/fireworks.hpp"
 #include "Audio/ambience.hpp"
+#include "GlobalNamespace/ResultsViewController.hpp"
+#include "GlobalNamespace/LevelCompletionResults.hpp"
+#include "GlobalNamespace/MediaAsyncLoader.hpp"
+#include "UnityEngine/AudioSource.hpp"
+#include "UnityEngine/Object.hpp"
+#include "System/Threading/Tasks/Tasks.hpp"
+#include "custom-types/shared/delegate.hpp"
+#include <functional>
+#include <filesystem>
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
 #include "UnityEngine/AudioClip.hpp"
 
@@ -229,6 +238,72 @@ MAKE_HOOK_MATCH(NewYearsMenuActivate, &MainMenuViewController::DidActivate,
     ballNeedsPreviewRestore = false;
 }
 
+namespace {
+    SafePtrUnity<GameObject> celebrationHost;
+    SafePtrUnity<AudioClip> celebrationClip;
+    bool celebrationActive = false;
+    bool celebrationPlayed = false;
+    bool celebrationLoading = false;
+    constexpr const char* celebrationPath = "/sdcard/ModData/com.beatgames.beatsaber/Mods/NewYears/new_year_celebration.ogg";
+    void StopCelebration() {
+        celebrationActive = false;
+        celebrationPlayed = false;
+        if (celebrationHost) {
+            auto* source = celebrationHost->GetComponent<AudioSource*>();
+            if (source) source->Stop();
+            Object::Destroy(celebrationHost.ptr());
+            celebrationHost = nullptr;
+        }
+    }
+    void PlayCelebration() {
+        if (!celebrationActive || celebrationPlayed || !celebrationHost || !celebrationClip) return;
+        auto* source = celebrationHost->GetComponent<AudioSource*>();
+        if (!source) return;
+        celebrationPlayed = true;
+        source->set_playOnAwake(false);
+        source->set_loop(false);
+        source->set_spatialBlend(0.0f);
+        source->set_volume(0.75f);
+        source->set_clip(celebrationClip.ptr());
+        source->Play();
+    }
+    void StartCelebration() {
+        if (celebrationActive) return;
+        celebrationActive = true;
+        std::error_code ec;
+        if (!std::filesystem::exists(celebrationPath, ec)) return;
+        celebrationHost = GameObject::New_ctor("NewYearsCelebrationAudio");
+        auto* source = celebrationHost->AddComponent<AudioSource*>();
+        if (!source) { StopCelebration(); return; }
+        source->set_playOnAwake(false);
+        if (celebrationClip) { PlayCelebration(); return; }
+        if (celebrationLoading) return;
+        celebrationLoading = true;
+        auto task = MediaAsyncLoader::New_ctor()->LoadAudioClipFromFilePathAsync(std::string(celebrationPath));
+        task->GetAwaiter().OnCompleted(custom_types::MakeDelegate<System::Action*>(
+            std::function([task]() {
+                celebrationLoading = false;
+                auto clip = task->get_Result();
+                if (!clip) return;
+                celebrationClip = clip.ptr();
+                PlayCelebration();
+            })));
+    }
+}
+MAKE_HOOK_MATCH(NewYearsResultsActivate, &ResultsViewController::DidActivate, void,
+    ResultsViewController* self, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
+    NewYearsResultsActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
+    auto* completed = self ? self->__cordl_internal_get__levelCompletionResults() : nullptr;
+    if (completed && completed->__cordl_internal_get_rank().value__ >= 5 &&
+        getModConfig().EnableFireworks.GetValue()) StartCelebration();
+    else StopCelebration();
+}
+MAKE_HOOK_MATCH(NewYearsResultsDeactivate, &ResultsViewController::DidDeactivate, void,
+    ResultsViewController* self, bool removedFromHierarchy, bool screenSystemDisabling) {
+    StopCelebration();
+    NewYearsResultsDeactivate(self, removedFromHierarchy, screenSystemDisabling);
+}
+
 MOD_EXTERN_FUNC void setup(CModInfo* info) noexcept {
     *info = modInfo.to_c();
     getModConfig().Init(modInfo);
@@ -243,5 +318,7 @@ MOD_EXTERN_FUNC void late_load() noexcept {
     INSTALL_HOOK(PaperLogger, NewYearsEnvironmentColors);
     INSTALL_HOOK(PaperLogger, MenuFloorSetPropertyBlock);
     INSTALL_HOOK(PaperLogger, NewYearsMenuActivate);
+    INSTALL_HOOK(PaperLogger, NewYearsResultsActivate);
+    INSTALL_HOOK(PaperLogger, NewYearsResultsDeactivate);
     INFO("New Year's Theme hooks installed");
 }
