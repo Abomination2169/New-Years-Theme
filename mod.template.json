@@ -14,5 +14,10 @@
     "${binary}"
   ],
   "libraryFiles": [],
-  "fileCopies": []
+  "fileCopies": [
+    {
+      "name": "new_year_celebration.ogg",
+      "destination": "/sdcard/ModData/com.beatgames.beatsaber/Mods/NewYears/new_year_celebration.ogg"
+    }
+  ]
 }
