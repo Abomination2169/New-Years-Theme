@@ -1,6 +1,4 @@
-## 🥂 New Years Theme — Video
-
-Watch New Years Theme in action!
+## 🥂 New Years Theme
 
 [![New Year's Theme — Beat Saber video thumbnail](NewYears-Banner.png)](https://www.youtube.com/watch?v=I4uneD_i5p0)
 
